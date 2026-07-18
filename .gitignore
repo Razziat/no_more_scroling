@@ -1,0 +1,14 @@
+# Dépendances et rapports de test
+node_modules/
+coverage/
+
+# Archives de distribution locales
+*.zip
+
+# Fichiers d’éditeur et d’environnement
+.agents/
+.codex/
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

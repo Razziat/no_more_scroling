@@ -1,0 +1,363 @@
+:root {
+  color-scheme: dark;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: #090b0b;
+  color: #f2f6f3;
+  margin: 0;
+  min-width: 370px;
+}
+
+.shell {
+  background:
+    radial-gradient(circle at 0 0, rgba(104, 245, 173, 0.1), transparent 32%),
+    #0d100f;
+  padding: 22px;
+}
+
+.header,
+.identity,
+.platform,
+footer {
+  align-items: center;
+  display: flex;
+}
+
+.header {
+  justify-content: space-between;
+}
+
+.identity {
+  gap: 12px;
+}
+
+.logo {
+  align-items: center;
+  background: #68f5ad;
+  border-radius: 9px;
+  color: #07110c;
+  display: inline-flex;
+  font-size: 17px;
+  font-weight: 900;
+  height: 32px;
+  justify-content: center;
+  transform: rotate(45deg);
+  width: 32px;
+}
+
+.product-name,
+.tagline {
+  margin: 0;
+}
+
+.product-name {
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 0.14em;
+}
+
+.tagline {
+  color: #7f8a85;
+  font-size: 11px;
+  margin-top: 3px;
+}
+
+.status {
+  background: rgba(104, 245, 173, 0.1);
+  border: 1px solid rgba(104, 245, 173, 0.22);
+  border-radius: 999px;
+  color: #75f8b5;
+  font-size: 11px;
+  font-weight: 750;
+  padding: 6px 10px;
+}
+
+.status::before {
+  background: currentColor;
+  border-radius: 50%;
+  content: "";
+  display: inline-block;
+  height: 6px;
+  margin-right: 6px;
+  width: 6px;
+}
+
+.status.off {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #89928d;
+}
+
+.status.locked {
+  background: rgba(255, 139, 77, 0.1);
+  border-color: rgba(255, 139, 77, 0.25);
+  color: #ff9d66;
+}
+
+.intro {
+  margin: 34px 0 24px;
+}
+
+.eyebrow {
+  color: #68f5ad !important;
+  font-size: 10px !important;
+  font-weight: 850;
+  letter-spacing: 0.14em;
+  margin-bottom: 10px !important;
+}
+
+.intro h1 {
+  font-size: 25px;
+  letter-spacing: -0.035em;
+  line-height: 1.08;
+  margin: 0;
+  max-width: 315px;
+}
+
+.intro p {
+  color: #8f9994;
+  font-size: 12px;
+  line-height: 1.55;
+  margin: 13px 0 0;
+}
+
+.punitive-card {
+  align-items: center;
+  background: rgba(255, 139, 77, 0.07);
+  border: 1px solid rgba(255, 139, 77, 0.18);
+  border-radius: 15px;
+  display: flex;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding: 14px;
+}
+
+.punitive-icon {
+  align-items: center;
+  background: rgba(255, 139, 77, 0.14);
+  border-radius: 10px;
+  color: #ff9d66;
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: 18px;
+  font-weight: 900;
+  height: 38px;
+  justify-content: center;
+  width: 38px;
+}
+
+.punitive-copy {
+  cursor: pointer;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.punitive-copy strong {
+  font-size: 13px;
+}
+
+.punitive-copy span {
+  color: #a18475;
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.platforms {
+  border: 1px solid rgba(255, 255, 255, 0.085);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.platform-card {
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.platform {
+  gap: 13px;
+  min-height: 72px;
+  padding: 14px;
+}
+
+.platform-card + .platform-card {
+  border-top: 1px solid rgba(255, 255, 255, 0.075);
+}
+
+.platform-card:hover {
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.platform-card.locked {
+  background: rgba(255, 139, 77, 0.035);
+}
+
+.platform-icon {
+  align-items: center;
+  border-radius: 11px;
+  display: inline-flex;
+  font-size: 16px;
+  height: 40px;
+  justify-content: center;
+  width: 40px;
+}
+
+.youtube {
+  background: rgba(255, 60, 60, 0.13);
+  color: #ff6262;
+}
+
+.instagram {
+  background: rgba(213, 86, 255, 0.12);
+  color: #e591ff;
+  font-size: 23px;
+}
+
+.platform-copy {
+  cursor: pointer;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.platform-copy strong {
+  font-size: 13px;
+}
+
+.platform-copy span {
+  color: #7f8a85;
+  font-size: 11px;
+}
+
+.switch {
+  cursor: pointer;
+  display: block;
+  flex: 0 0 auto;
+  height: 24px;
+  position: relative;
+  width: 42px;
+}
+
+.switch input {
+  cursor: pointer;
+  height: 100%;
+  inset: 0;
+  opacity: 0;
+  position: absolute;
+  width: 100%;
+  z-index: 2;
+}
+
+.switch-track {
+  background: #333a37;
+  border-radius: 999px;
+  inset: 0;
+  position: absolute;
+  transition: background 150ms ease;
+}
+
+.switch-track::after {
+  background: #aab2ae;
+  border-radius: 50%;
+  content: "";
+  height: 18px;
+  left: 3px;
+  position: absolute;
+  top: 3px;
+  transition: transform 150ms ease, background 150ms ease;
+  width: 18px;
+}
+
+.switch input:checked + .switch-track {
+  background: #68f5ad;
+}
+
+.switch input:checked + .switch-track::after {
+  background: #07110c;
+  transform: translateX(18px);
+}
+
+.switch input:focus-visible + .switch-track {
+  outline: 3px solid rgba(104, 245, 173, 0.3);
+  outline-offset: 3px;
+}
+
+.switch input:disabled + .switch-track {
+  cursor: not-allowed;
+  filter: grayscale(0.7);
+  opacity: 0.55;
+}
+
+.switch-warning input:checked + .switch-track {
+  background: #ff9d66;
+}
+
+.lock-panel {
+  align-items: center;
+  border-top: 1px solid rgba(255, 139, 77, 0.13);
+  color: #b99683;
+  display: flex;
+  font-size: 10px;
+  justify-content: space-between;
+  padding: 10px 14px 12px;
+}
+
+.lock-panel[hidden] {
+  display: none;
+}
+
+.lock-panel strong {
+  color: #ffb188;
+  font-variant-numeric: tabular-nums;
+}
+
+.lock-panel button {
+  background: rgba(255, 139, 77, 0.12);
+  border: 1px solid rgba(255, 139, 77, 0.2);
+  border-radius: 8px;
+  color: #ffc1a0;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 750;
+  padding: 6px 9px;
+}
+
+.lock-panel button:hover {
+  background: rgba(255, 139, 77, 0.2);
+}
+
+.lock-panel button:focus-visible {
+  outline: 3px solid rgba(255, 157, 102, 0.25);
+  outline-offset: 2px;
+}
+
+footer {
+  color: #69736e;
+  font-size: 10px;
+  gap: 7px;
+  line-height: 1.4;
+  margin-top: 18px;
+}
+
+.privacy-dot {
+  background: #68f5ad;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  height: 5px;
+  width: 5px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .switch-track,
+  .switch-track::after {
+    transition: none;
+  }
+}

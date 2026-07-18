@@ -1,0 +1,42 @@
+{
+  "manifest_version": 3,
+  "name": "Anti-scroll",
+  "version": "0.4.0",
+  "description": "Bloque les Shorts YouTube et les Reels Instagram sans bloquer le reste des plateformes.",
+  "permissions": [
+    "storage",
+    "webNavigation"
+  ],
+  "host_permissions": [
+    "https://*.youtube.com/*",
+    "https://*.instagram.com/*"
+  ],
+  "background": {
+    "service_worker": "src/background/service-worker.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.youtube.com/*",
+        "https://*.instagram.com/*"
+      ],
+      "js": [
+        "src/core/rules.js",
+        "src/core/settings.js",
+        "src/core/locks.js",
+        "src/core/i18n.js",
+        "src/content/brain-animation.js",
+        "src/content/content-script.js"
+      ],
+      "css": [
+        "src/content/content.css"
+      ],
+      "run_at": "document_start",
+      "all_frames": false
+    }
+  ],
+  "action": {
+    "default_title": "Anti-scroll",
+    "default_popup": "src/popup/popup.html"
+  }
+}

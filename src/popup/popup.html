@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Anti-scroll</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="header">
+        <div class="identity">
+          <span class="logo" aria-hidden="true">↕</span>
+          <div>
+            <p class="product-name">ANTI-SCROLL</p>
+            <p class="tagline" data-i18n="tagline">The content, without the spiral.</p>
+          </div>
+        </div>
+        <span class="status" id="status" data-i18n="statusActive">Active</span>
+      </header>
+
+      <section class="intro" aria-labelledby="intro-title">
+        <p class="eyebrow" data-i18n="protection">PROTECTION</p>
+        <h1 id="intro-title" data-i18n="introTitle">
+          Choose what deserves your attention.
+        </h1>
+        <p data-i18n="introDescription">
+          Regular videos remain available. Only short-form infinite-scroll
+          content is blocked.
+        </p>
+      </section>
+
+      <section class="punitive-card" aria-labelledby="punitive-title">
+        <span class="punitive-icon" aria-hidden="true">!</span>
+        <label class="punitive-copy" for="punitive-toggle">
+          <strong id="punitive-title" data-i18n="punitiveMode">Punitive mode</strong>
+          <span data-i18n="punitiveDescription">
+            One attempt blocks the entire site for 30 min.
+          </span>
+        </label>
+        <label class="switch switch-warning" for="punitive-toggle">
+          <input id="punitive-toggle" type="checkbox" />
+          <span class="switch-track" aria-hidden="true"></span>
+        </label>
+      </section>
+
+      <section
+        class="platforms"
+        aria-label="Protected platforms"
+        data-i18n-aria-label="platformsProtected"
+      >
+        <article class="platform-card" data-platform-card="youtube">
+          <div class="platform">
+            <span class="platform-icon youtube" aria-hidden="true">▶</span>
+            <label class="platform-copy" for="youtube-toggle">
+              <strong>YouTube</strong>
+              <span data-site-description data-i18n="blockShorts">Block Shorts</span>
+            </label>
+            <label class="switch" for="youtube-toggle">
+              <input id="youtube-toggle" type="checkbox" data-site="youtube" />
+              <span class="switch-track" aria-hidden="true"></span>
+            </label>
+          </div>
+          <div class="lock-panel" data-lock-panel hidden>
+            <span><span data-i18n="lockedRemaining">Blocked for</span> <strong data-lock-timer>30:00</strong></span>
+            <button type="button" data-unlock="youtube" data-i18n="unlock">Unlock</button>
+          </div>
+        </article>
+
+        <article class="platform-card" data-platform-card="instagram">
+          <div class="platform">
+            <span class="platform-icon instagram" aria-hidden="true">◎</span>
+            <label class="platform-copy" for="instagram-toggle">
+              <strong>Instagram</strong>
+              <span data-site-description data-i18n="blockReels">Block Reels</span>
+            </label>
+            <label class="switch" for="instagram-toggle">
+              <input id="instagram-toggle" type="checkbox" data-site="instagram" />
+              <span class="switch-track" aria-hidden="true"></span>
+            </label>
+          </div>
+          <div class="lock-panel" data-lock-panel hidden>
+            <span><span data-i18n="lockedRemaining">Blocked for</span> <strong data-lock-timer>30:00</strong></span>
+            <button type="button" data-unlock="instagram" data-i18n="unlock">Unlock</button>
+          </div>
+        </article>
+      </section>
+
+      <footer>
+        <span class="privacy-dot" aria-hidden="true"></span>
+        <span data-i18n="privacy">No browsing history is sent or collected.</span>
+      </footer>
+    </main>
+
+    <script src="../core/settings.js"></script>
+    <script src="../core/locks.js"></script>
+    <script src="../core/i18n.js"></script>
+    <script src="popup.js"></script>
+  </body>
+</html>

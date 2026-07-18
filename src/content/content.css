@@ -1,0 +1,20 @@
+html[data-anti-scroll-blocked="true"] {
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+}
+
+html[data-anti-scroll-blocked="true"] > body {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+anti-scroll-blocker {
+  display: block !important;
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 2147483647 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+}
