@@ -1,5 +1,7 @@
 # Anti-scroll
 
+**Français** | [English](README.en.md)
+
 Extension Brave/Chromium qui bloque les **Shorts YouTube** et les **Reels
 Instagram** tout en laissant accessibles les vidéos classiques, les
 publications, les profils et la recherche.
