@@ -22,6 +22,24 @@ serveur et aucune télémétrie.
 
 ## Installation dans Brave
 
+### Téléchargement direct — recommandé
+
+1. Télécharger la dernière version :
+
+   [**Télécharger anti-scroll.zip**](https://github.com/Razziat/no_more_scroling/releases/latest/download/anti-scroll.zip)
+
+2. Extraire le fichier ZIP dans un dossier permanent.
+3. Ouvrir `brave://extensions`.
+4. Activer **Mode développeur** en haut à droite.
+5. Cliquer sur **Charger l’extension non empaquetée**.
+6. Sélectionner le dossier extrait qui contient `manifest.json`.
+7. Épingler Anti-scroll dans la barre d’outils pour accéder aux interrupteurs.
+
+> Brave ne charge pas directement les archives ZIP : le fichier doit être
+> extrait avant de sélectionner le dossier de l’extension.
+
+### Installation avec Git
+
 1. Cloner le dépôt :
 
    ```bash
