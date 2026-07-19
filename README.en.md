@@ -21,6 +21,24 @@ telemetry.
 
 ## Install in Brave
 
+### Direct download — recommended
+
+1. Download the latest version:
+
+   [**Download anti-scroll.zip**](https://github.com/Razziat/no_more_scroling/releases/latest/download/anti-scroll.zip)
+
+2. Extract the ZIP file to a permanent directory.
+3. Open `brave://extensions`.
+4. Enable **Developer mode** in the top-right corner.
+5. Click **Load unpacked**.
+6. Select the extracted directory containing `manifest.json`.
+7. Pin Anti-scroll to the toolbar to access its controls.
+
+> Brave cannot load the ZIP archive directly. Extract it before selecting the
+> extension directory.
+
+### Install with Git
+
 1. Clone the repository:
 
    ```bash
