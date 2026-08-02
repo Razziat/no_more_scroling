@@ -53,6 +53,21 @@ The generated APK is located at
 6. In Android settings, select **Anti Scroll protection** and enable the
    service.
 
+### Manually installed APK on Android 13 or later
+
+Android may prevent the accessibility service from being enabled when Anti
+Scroll was installed from an APK file instead of an app store. In that case:
+
+1. Open **Settings > Apps > Anti Scroll**.
+2. Open the **⋮** menu in the top-right corner.
+3. Select **Allow restricted settings** and confirm your identity.
+4. Return to **Settings > Accessibility > Installed apps**.
+5. Select **Anti Scroll protection**, then enable the service.
+
+Menu names can vary by device manufacturer. This is an Android security
+measure for manually installed applications; the procedure is documented in
+[the official Android Help](https://support.google.com/android/answer/12623953?hl=en).
+
 Accessibility access is required to identify the visible screen and trigger
 Android’s **Back** action. It is not used to read, store, or transmit the
 user’s messages, searches, or videos.

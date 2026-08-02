@@ -59,6 +59,23 @@ l’APK de debug.
 6. Dans les réglages Android, sélectionner **Protection Anti Scroll** et
    activer le service.
 
+### APK installé manuellement sur Android 13 ou supérieur
+
+Android peut empêcher l’activation du service d’accessibilité lorsqu’Anti
+Scroll a été installé depuis un fichier APK plutôt que depuis une boutique
+d’applications. Dans ce cas :
+
+1. Ouvrir **Paramètres > Applications > Anti Scroll**.
+2. Ouvrir le menu **⋮** en haut à droite.
+3. Choisir **Autoriser les paramètres restreints** et confirmer son identité.
+4. Revenir dans **Paramètres > Accessibilité > Applications installées**.
+5. Sélectionner **Protection Anti Scroll**, puis activer le service.
+
+Le nom exact des menus peut varier selon le fabricant. Cette protection est un
+mécanisme de sécurité Android pour les applications installées manuellement ;
+la procédure est décrite dans
+[l’aide officielle Android](https://support.google.com/android/answer/12623953?hl=fr).
+
 L’accès d’accessibilité est nécessaire pour identifier l’écran actuellement
 affiché et déclencher l’action Android **Retour**. Il ne sert pas à lire,
 enregistrer ou transmettre les messages, recherches ou vidéos de
