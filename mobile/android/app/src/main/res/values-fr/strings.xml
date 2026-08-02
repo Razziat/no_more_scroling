@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Anti Scroll</string>
+    <string name="app_tagline">Ton attention t’appartient.</string>
+    <string name="service_section_title">Protection</string>
+    <string name="service_active">Protection active</string>
+    <string name="service_inactive">Protection inactive</string>
+    <string name="service_active_description">Les contenus courts sont surveillés localement.</string>
+    <string name="service_inactive_description">Active l’accès d’accessibilité Android pour commencer le blocage.</string>
+    <string name="open_accessibility_settings">Activer la protection</string>
+    <string name="manage_accessibility_settings">Gérer l’accès Android</string>
+    <string name="blocked_content_title">Contenus à bloquer</string>
+    <string name="youtube_shorts_title">YouTube Shorts</string>
+    <string name="youtube_shorts_description">Conserve les vidéos normales, bloque le lecteur Shorts.</string>
+    <string name="instagram_reels_title">Instagram Reels</string>
+    <string name="instagram_reels_description">Conserve les publications et messages, bloque le lecteur Reels.</string>
+    <string name="punitive_section_title">Mode punitif</string>
+    <string name="punitive_mode_title">Sanction de 30 minutes</string>
+    <string name="punitive_mode_description">L’ouverture d’un Short ou d’un Reel bloque toute l’application pendant 30 minutes.</string>
+    <string name="punitive_mode_warning">Une nouvelle tentative ne redémarre pas et ne prolonge pas le minuteur.</string>
+    <string name="active_locks_title">Blocages actifs</string>
+    <string name="lock_remaining">Bloqué · %1$s restantes</string>
+    <string name="unlock_platform">Débloquer</string>
+    <string name="youtube_name">YouTube</string>
+    <string name="instagram_name">Instagram</string>
+    <string name="how_it_works_title">Fonctionnement</string>
+    <string name="how_it_works_body">Quand un Short ou un Reel est détecté, Anti Scroll appuie sur Retour et affiche un rappel. Rien de ce que tu regardes n’est enregistré ni envoyé.</string>
+    <string name="how_it_works_punitive_body">Quand un Short ou un Reel est détecté, toute la plateforme est bloquée pendant 30 minutes. Les tentatives suivantes affichent le temps restant.</string>
+    <string name="privacy_badge">100 % local · Aucune permission Internet</string>
+    <string name="disclosure_title">Avant de continuer</string>
+    <string name="disclosure_body">Anti Scroll utilise l’accès d’accessibilité Android uniquement pour identifier l’affichage de YouTube Shorts ou Instagram Reels. L’application utilise Retour pour quitter le contenu bloqué ou l’application sanctionnée, sans modifier la page actuelle du bureau, et empêche l’accès à la plateforme pendant 30 minutes en mode punitif. Le contenu de l’interface n’est jamais enregistré ni transmis.</string>
+    <string name="cancel">Annuler</string>
+    <string name="agree_and_continue">J’accepte et je continue</string>
+    <string name="accessibility_service_name">Protection Anti Scroll</string>
+    <string name="accessibility_service_description">Détecte YouTube Shorts et Instagram Reels, revient à l’écran précédent et peut appliquer un blocage facultatif de 30 minutes. Tout le traitement reste sur cet appareil.</string>
+    <string name="block_overlay_title">Reste concentré !</string>
+    <string name="youtube_blocked_overlay">Les Shorts YouTube sont indisponibles</string>
+    <string name="instagram_blocked_overlay">Les Reels Instagram sont indisponibles</string>
+    <string name="punitive_overlay_title">Reste concentré !</string>
+    <string name="punitive_youtube_blocked">YouTube est bloqué</string>
+    <string name="punitive_instagram_blocked">Instagram est bloqué</string>
+    <string name="punitive_time_remaining">Temps restant</string>
+</resources>

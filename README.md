@@ -6,7 +6,10 @@ Extension Brave/Chromium qui bloque les **Shorts YouTube** et les **Reels
 Instagram** tout en laissant accessibles les vidéos classiques, les
 publications, les profils et la recherche.
 
-Anti-scroll fonctionne entièrement dans le navigateur : aucun compte, aucun
+Le dépôt contient également une première [application Android](mobile/README.md)
+qui applique le même principe aux applications natives YouTube et Instagram.
+
+Anti-scroll fonctionne entièrement sur l’appareil : aucun compte, aucun
 serveur et aucune télémétrie.
 
 ## Fonctionnalités
