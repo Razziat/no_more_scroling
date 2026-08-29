@@ -67,7 +67,7 @@ repository secret**. Créer exactement ces quatre secrets :
 
 Dans `mobile/android/app/build.gradle.kts` :
 
-- définir un `versionName`, par exemple `0.2.1` ;
+- définir un `versionName`, par exemple `0.3.1` ;
 - augmenter `versionCode` à une valeur strictement supérieure à la précédente ;
 - vérifier que le tag prévu est exactement `android-v` suivi du `versionName`.
 
@@ -76,6 +76,8 @@ Faire les tests finaux sur un téléphone réel, notamment :
 - ouverture de Shorts depuis l'onglet, l'accueil et un lien direct ;
 - ouverture de Reels depuis l'onglet, le fil et un lien direct ;
 - mode normal et mode punitif ;
+- limite de session Instagram : pause dans les messages et profils, première
+  sanction de 30 minutes, seconde sanction jusqu’à minuit ;
 - mise à jour par-dessus la précédente version signée, sans désinstallation.
 
 ### 2. Créer et pousser le tag
@@ -83,8 +85,8 @@ Faire les tests finaux sur un téléphone réel, notamment :
 Après avoir fusionné ou validé le commit à publier :
 
 ```powershell
-git tag -a android-v0.2.1 -m "Anti Scroll Android v0.2.1"
-git push origin android-v0.2.1
+git tag -a android-v0.3.1 -m "Anti Scroll Android v0.3.1"
+git push origin android-v0.3.1
 ```
 
 Le workflow `.github/workflows/android-release.yml` effectue alors :

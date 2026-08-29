@@ -52,6 +52,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.antiscroll.mobile.accessibility.AccessibilityServiceStatus
+import com.antiscroll.mobile.data.InstagramSessionLimitManager
+import com.antiscroll.mobile.data.InstagramSessionSnapshot
 import com.antiscroll.mobile.data.PlatformLock
 import com.antiscroll.mobile.data.PunitiveLockManager
 import com.antiscroll.mobile.data.SettingsRepository
@@ -61,6 +63,9 @@ import java.util.Locale
 class MainActivity : ComponentActivity() {
     private val settingsRepository by lazy { SettingsRepository(this) }
     private val punitiveLockManager by lazy { PunitiveLockManager(this) }
+    private val instagramSessionLimitManager by lazy {
+        InstagramSessionLimitManager(this)
+    }
     private val mainHandler = Handler(Looper.getMainLooper())
     private var serviceEnabled by mutableStateOf(false)
     private var nowMillis by mutableLongStateOf(System.currentTimeMillis())
@@ -81,6 +86,7 @@ class MainActivity : ComponentActivity() {
                     nowMillis = nowMillis,
                     settingsRepository = settingsRepository,
                     punitiveLockManager = punitiveLockManager,
+                    instagramSessionLimitManager = instagramSessionLimitManager,
                     onOpenAccessibilitySettings = ::openAccessibilitySettings,
                 )
             }
@@ -115,6 +121,7 @@ private fun AntiScrollApp(
     nowMillis: Long,
     settingsRepository: SettingsRepository,
     punitiveLockManager: PunitiveLockManager,
+    instagramSessionLimitManager: InstagramSessionLimitManager,
     onOpenAccessibilitySettings: () -> Unit,
 ) {
     var youtubeEnabled by rememberSaveable {
@@ -126,6 +133,9 @@ private fun AntiScrollApp(
     var punitiveModeEnabled by rememberSaveable {
         mutableStateOf(settingsRepository.punitiveModeEnabled)
     }
+    var instagramSessionLimitEnabled by rememberSaveable {
+        mutableStateOf(settingsRepository.instagramSessionLimitEnabled)
+    }
     var lockRefreshToken by remember { mutableIntStateOf(0) }
     var showDisclosure by remember { mutableStateOf(false) }
 
@@ -134,6 +144,9 @@ private fun AntiScrollApp(
     }
     val instagramLock = remember(nowMillis, lockRefreshToken) {
         punitiveLockManager.activeLock(SettingsRepository.INSTAGRAM_PACKAGE)
+    }
+    val instagramSessionSnapshot = remember(nowMillis, lockRefreshToken) {
+        instagramSessionLimitManager.snapshot(nowMillis)
     }
 
     Surface(
@@ -185,6 +198,18 @@ private fun AntiScrollApp(
                 },
             )
 
+            SectionLabel(text = stringResource(R.string.instagram_session_section_title))
+            InstagramSessionLimitCard(
+                enabled = instagramSessionLimitEnabled,
+                snapshot = instagramSessionSnapshot,
+                onEnabledChanged = { enabled ->
+                    instagramSessionLimitEnabled = enabled
+                    settingsRepository.instagramSessionLimitEnabled = enabled
+                    if (!enabled) instagramSessionLimitManager.clearAll()
+                    lockRefreshToken += 1
+                },
+            )
+
             SectionLabel(text = stringResource(R.string.punitive_section_title))
             PunitiveModeCard(
                 enabled = punitiveModeEnabled,
@@ -206,7 +231,10 @@ private fun AntiScrollApp(
                 },
             )
 
-            InformationCard(punitiveModeEnabled = punitiveModeEnabled)
+            InformationCard(
+                punitiveModeEnabled = punitiveModeEnabled,
+                instagramSessionLimitEnabled = instagramSessionLimitEnabled,
+            )
         }
     }
 
@@ -418,6 +446,90 @@ private fun PlatformSetting(
 }
 
 @Composable
+private fun InstagramSessionLimitCard(
+    enabled: Boolean,
+    snapshot: InstagramSessionSnapshot,
+    onEnabledChanged: (Boolean) -> Unit,
+) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        shape = RoundedCornerShape(22.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+    ) {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.instagram_session_limit_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = stringResource(R.string.instagram_session_limit_description),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+                Switch(
+                    checked = enabled,
+                    onCheckedChange = onEnabledChanged,
+                )
+            }
+
+            if (enabled) {
+                Text(
+                    text = stringResource(R.string.instagram_session_penalties),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                            shape = RoundedCornerShape(12.dp),
+                        )
+                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+
+                HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
+
+                val lock = snapshot.activeLock
+                Text(
+                    text = if (lock != null) {
+                        stringResource(
+                            R.string.instagram_session_locked_remaining,
+                            formatRemainingTime(lock.remainingMillis),
+                        )
+                    } else {
+                        stringResource(
+                            R.string.instagram_session_time_remaining,
+                            formatRemainingTime(snapshot.sessionRemainingMillis),
+                        )
+                    },
+                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    text = stringResource(
+                        R.string.instagram_session_violations_today,
+                        snapshot.violationsToday,
+                    ),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun PunitiveModeCard(
     enabled: Boolean,
     youtubeLock: PlatformLock?,
@@ -545,7 +657,10 @@ private fun formatRemainingTime(remainingMillis: Long): String {
 }
 
 @Composable
-private fun InformationCard(punitiveModeEnabled: Boolean) {
+private fun InformationCard(
+    punitiveModeEnabled: Boolean,
+    instagramSessionLimitEnabled: Boolean,
+) {
     Card(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer,
@@ -570,6 +685,13 @@ private fun InformationCard(punitiveModeEnabled: Boolean) {
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
                 style = MaterialTheme.typography.bodyMedium,
             )
+            if (instagramSessionLimitEnabled) {
+                Text(
+                    text = stringResource(R.string.how_it_works_session_body),
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
             Text(
                 text = stringResource(R.string.privacy_badge),
                 modifier = Modifier

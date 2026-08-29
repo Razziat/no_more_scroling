@@ -15,6 +15,10 @@ Reels** viewers while keeping the other parts of both applications available.
 - Temporary “Stay focused!” message.
 - Optional punitive mode: one attempt blocks the entire platform for 30
   minutes, with a countdown and manual unlock.
+- Optional Instagram session limit: five minutes on Home or Explore, with the
+  timer paused in messages and profiles.
+- After the first overrun, Instagram is blocked for 30 minutes. A second
+  overrun on the same day blocks it until midnight.
 - French or English UI based on the Android language.
 - No Internet permission and no transmitted data.
 
@@ -47,10 +51,11 @@ The generated APK is located at
 
 1. Open Anti Scroll.
 2. Choose the platforms to protect.
-3. Optionally enable **Punitive mode**.
-4. Tap **Enable protection**.
-5. Read and accept the disclosure.
-6. In Android settings, select **Anti Scroll protection** and enable the
+3. Optionally enable **5-minute feed sessions**.
+4. Optionally enable **Punitive mode** for Shorts and Reels.
+5. Tap **Enable protection**.
+6. Read and accept the disclosure.
+7. In Android settings, select **Anti Scroll protection** and enable the
    service.
 
 ### Manually installed APK on Android 13 or later
@@ -86,10 +91,12 @@ mobile/android/
 │   │   └── BlockOverlayController.kt
 │   ├── data/
 │   │   ├── SettingsRepository.kt
-│   │   └── PunitiveLockManager.kt
+│   │   ├── PunitiveLockManager.kt
+│   │   └── InstagramSessionLimitManager.kt
 │   ├── detection/
 │   │   ├── YouTubeShortsDetector.kt
 │   │   ├── InstagramReelsDetector.kt
+│   │   ├── InstagramSessionSurfaceClassifier.kt
 │   │   └── ShortFormDetectionEngine.kt
 │   └── ui/theme/
 └── app/src/test/
@@ -99,6 +106,16 @@ The service only receives events from `com.google.android.youtube` and
 `com.instagram.android`. It converts a limited copy of the accessibility tree
 into an in-memory model and runs the platform-specific detectors. The copy is
 discarded immediately after analysis and is never written to disk.
+
+When the Instagram session limit is enabled, the application retains only
+local counters: current-session duration, the number of overruns that day, and
+the end of an active block. Home and Explore count. Messages and profiles
+pause the timer. Leaving Instagram resets the current session without erasing
+overruns already recorded that day.
+
+Classification depends on the accessibility interface exposed by Instagram.
+To prevent easy bypasses, an unknown Instagram screen is conservatively
+counted as feed time until it is recognized as messages or a profile.
 
 ## Detection and false positives
 
@@ -124,7 +141,7 @@ the versions that users actually have installed.
 - no telemetry;
 - no account;
 - no retained interface content;
-- settings stored only in private Android preferences.
+- settings and session counters stored only in private Android preferences.
 
 Before a potential Google Play release, use of the accessibility service must
 be declared in Play Console and documented in the store listing.

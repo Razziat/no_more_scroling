@@ -6,4 +6,7 @@
     <exclude
         domain="sharedpref"
         path="anti_scroll_punitive_locks.xml" />
+    <exclude
+        domain="sharedpref"
+        path="anti_scroll_instagram_sessions.xml" />
 </full-backup-content>

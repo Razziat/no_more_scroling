@@ -7,6 +7,9 @@
         <exclude
             domain="sharedpref"
             path="anti_scroll_punitive_locks.xml" />
+        <exclude
+            domain="sharedpref"
+            path="anti_scroll_instagram_sessions.xml" />
     </cloud-backup>
     <device-transfer>
         <exclude
@@ -15,5 +18,8 @@
         <exclude
             domain="sharedpref"
             path="anti_scroll_punitive_locks.xml" />
+        <exclude
+            domain="sharedpref"
+            path="anti_scroll_instagram_sessions.xml" />
     </device-transfer>
 </data-extraction-rules>

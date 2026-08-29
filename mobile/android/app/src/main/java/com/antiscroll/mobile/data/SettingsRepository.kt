@@ -26,9 +26,22 @@ class SettingsRepository(context: Context) {
             preferences.edit().putBoolean(KEY_PUNITIVE_MODE_ENABLED, value).apply()
         }
 
+    var instagramSessionLimitEnabled: Boolean
+        get() = preferences.getBoolean(KEY_INSTAGRAM_SESSION_LIMIT_ENABLED, false)
+        set(value) {
+            preferences.edit().putBoolean(KEY_INSTAGRAM_SESSION_LIMIT_ENABLED, value).apply()
+        }
+
     fun isBlockingEnabledFor(packageName: String): Boolean = when (packageName) {
         YOUTUBE_PACKAGE -> youtubeBlockingEnabled
         INSTAGRAM_PACKAGE -> instagramBlockingEnabled
+        else -> false
+    }
+
+    fun shouldMonitorPackage(packageName: String): Boolean = when (packageName) {
+        YOUTUBE_PACKAGE -> youtubeBlockingEnabled
+        INSTAGRAM_PACKAGE ->
+            instagramBlockingEnabled || instagramSessionLimitEnabled
         else -> false
     }
 
@@ -40,5 +53,7 @@ class SettingsRepository(context: Context) {
         private const val KEY_YOUTUBE_ENABLED = "youtube_blocking_enabled"
         private const val KEY_INSTAGRAM_ENABLED = "instagram_blocking_enabled"
         private const val KEY_PUNITIVE_MODE_ENABLED = "punitive_mode_enabled"
+        private const val KEY_INSTAGRAM_SESSION_LIMIT_ENABLED =
+            "instagram_session_limit_enabled"
     }
 }

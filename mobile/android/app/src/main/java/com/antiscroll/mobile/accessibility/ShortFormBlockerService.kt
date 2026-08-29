@@ -3,20 +3,25 @@ package com.antiscroll.mobile.accessibility
 import android.accessibilityservice.AccessibilityService
 import android.os.Handler
 import android.os.Looper
+import android.os.PowerManager
 import android.os.SystemClock
 import android.view.accessibility.AccessibilityEvent
 import com.antiscroll.mobile.blocking.BlockCoordinator
 import com.antiscroll.mobile.blocking.BlockOverlayController
+import com.antiscroll.mobile.data.InstagramSessionLimitManager
 import com.antiscroll.mobile.data.PlatformLock
 import com.antiscroll.mobile.data.PunitiveLockManager
 import com.antiscroll.mobile.data.SettingsRepository
 import com.antiscroll.mobile.detection.DetectionContext
+import com.antiscroll.mobile.detection.InstagramSessionSurface
+import com.antiscroll.mobile.detection.InstagramSessionSurfaceClassifier
 import com.antiscroll.mobile.detection.ShortFormDetectionEngine
 import java.util.Locale
 
 class ShortFormBlockerService : AccessibilityService() {
     private val mainHandler = Handler(Looper.getMainLooper())
     private val detectionEngine = ShortFormDetectionEngine()
+    private val instagramSurfaceClassifier = InstagramSessionSurfaceClassifier()
     private val awaitingExitSinceByPackage = mutableMapOf<String, Long>()
     private val lastBlockedOpenTimeByPackage = mutableMapOf<String, Long>()
     private val lastPunitiveOverlayAtByPackage = mutableMapOf<String, Long>()
@@ -24,7 +29,9 @@ class ShortFormBlockerService : AccessibilityService() {
 
     private lateinit var settingsRepository: SettingsRepository
     private lateinit var punitiveLockManager: PunitiveLockManager
+    private lateinit var instagramSessionLimitManager: InstagramSessionLimitManager
     private lateinit var blockCoordinator: BlockCoordinator
+    private lateinit var powerManager: PowerManager
 
     private var pendingScan: Runnable? = null
     private var pendingPackageName: String? = null
@@ -33,30 +40,57 @@ class ShortFormBlockerService : AccessibilityService() {
     private var pendingEventTime: Long? = null
     private var pendingExplicitSurfaceOpen = false
     private var pendingRetriesRemaining = 0
+    private var instagramSessionSurface = InstagramSessionSurface.COUNTED
+    private var instagramWasForeground = false
+    private var lastSessionTickElapsedMillis = 0L
+    private var lastSurfaceRefreshElapsedMillis = 0L
+
+    private val sessionTicker = object : Runnable {
+        override fun run() {
+            try {
+                updateInstagramSession()
+            } catch (_: Exception) {
+                // A transient accessibility failure must not stop all future ticks.
+            } finally {
+                mainHandler.postDelayed(this, SESSION_TICK_INTERVAL_MS)
+            }
+        }
+    }
 
     override fun onCreate() {
         super.onCreate()
         settingsRepository = SettingsRepository(this)
         punitiveLockManager = PunitiveLockManager(this)
+        instagramSessionLimitManager = InstagramSessionLimitManager(this)
+        powerManager = getSystemService(PowerManager::class.java)
         blockCoordinator = BlockCoordinator(
             service = this,
             overlayController = BlockOverlayController(this),
         )
+        lastSessionTickElapsedMillis = SystemClock.elapsedRealtime()
+        mainHandler.post(sessionTicker)
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         val packageName = event?.packageName?.toString() ?: return
 
-        val activeLock = punitiveLockManager.activeLock(packageName)
-        if (activeLock != null && settingsRepository.punitiveModeEnabled) {
+        if (packageName == SettingsRepository.INSTAGRAM_PACKAGE &&
+            settingsRepository.instagramSessionLimitEnabled
+        ) {
+            instagramSurfaceClassifier
+                .classifyEventClass(event.className?.toString())
+                ?.let { instagramSessionSurface = it }
+        }
+
+        val activeLock = activeLockFor(packageName)
+        if (activeLock != null) {
             if (pendingPackageName == packageName) cancelPendingScan()
             enforcePunitiveLock(activeLock)
             return
         }
-        if (activeLock != null) punitiveLockManager.clear(packageName)
         lastPunitiveOverlayAtByPackage.remove(packageName)
 
-        if (!settingsRepository.isBlockingEnabledFor(packageName)) {
+        if (!settingsRepository.shouldMonitorPackage(packageName)) {
             if (pendingPackageName == packageName) cancelPendingScan()
             return
         }
@@ -160,7 +194,7 @@ class ShortFormBlockerService : AccessibilityService() {
         triggerExplicitSurfaceOpen: Boolean,
         retriesRemaining: Int,
     ) {
-        if (!settingsRepository.isBlockingEnabledFor(expectedPackageName)) {
+        if (!settingsRepository.shouldMonitorPackage(expectedPackageName)) {
             awaitingExitSinceByPackage.remove(expectedPackageName)
             return
         }
@@ -183,17 +217,46 @@ class ShortFormBlockerService : AccessibilityService() {
             return
         }
 
+        val contentBlockingEnabled =
+            settingsRepository.isBlockingEnabledFor(expectedPackageName)
+        val sessionLimitEnabled =
+            expectedPackageName == SettingsRepository.INSTAGRAM_PACKAGE &&
+                settingsRepository.instagramSessionLimitEnabled
+
         // Activity/class markers are already strong enough on their own. Check
         // them before copying the accessibility tree, which is the expensive
         // part of detection on content-heavy screens.
-        val detection = detectionEngine.detectEventClass(
-            packageName = expectedPackageName,
-            eventClassName = eventClassName,
-        ) ?: detectionEngine.detect(
+        val eventClassDetection = if (contentBlockingEnabled) {
+            detectionEngine.detectEventClass(
+                packageName = expectedPackageName,
+                eventClassName = eventClassName,
+            )
+        } else {
+            null
+        }
+        val snapshot = if (sessionLimitEnabled || eventClassDetection == null) {
+            UiTreeReader.capture(root)
+        } else {
+            null
+        }
+
+        if (sessionLimitEnabled) {
+            instagramSessionSurface = instagramSurfaceClassifier.classify(
+                eventClassName = eventClassName,
+                root = snapshot,
+            )
+        }
+
+        if (!contentBlockingEnabled) {
+            awaitingExitSinceByPackage.remove(expectedPackageName)
+            return
+        }
+
+        val detection = eventClassDetection ?: detectionEngine.detect(
             DetectionContext(
                 packageName = expectedPackageName,
                 eventClassName = eventClassName,
-                root = UiTreeReader.capture(root),
+                root = snapshot ?: UiTreeReader.capture(root),
             ),
         )
 
@@ -268,6 +331,99 @@ class ShortFormBlockerService : AccessibilityService() {
         )
     }
 
+    private fun activeLockFor(packageName: String): PlatformLock? {
+        val punitiveLock = punitiveLockManager.activeLock(packageName)
+        val enabledPunitiveLock = if (settingsRepository.punitiveModeEnabled) {
+            punitiveLock
+        } else {
+            if (punitiveLock != null) punitiveLockManager.clear(packageName)
+            null
+        }
+
+        val sessionLock = if (
+            packageName == SettingsRepository.INSTAGRAM_PACKAGE &&
+            settingsRepository.instagramSessionLimitEnabled
+        ) {
+            instagramSessionLimitManager.activeLock()
+        } else {
+            null
+        }
+
+        return listOfNotNull(enabledPunitiveLock, sessionLock)
+            .maxByOrNull(PlatformLock::blockedUntilMillis)
+    }
+
+    private fun updateInstagramSession() {
+        val nowElapsedMillis = SystemClock.elapsedRealtime()
+        val deltaMillis =
+            (nowElapsedMillis - lastSessionTickElapsedMillis)
+                .coerceIn(0L, MAX_SESSION_TICK_DELTA_MS)
+        lastSessionTickElapsedMillis = nowElapsedMillis
+
+        if (!settingsRepository.instagramSessionLimitEnabled) {
+            instagramWasForeground = false
+            instagramSessionSurface = InstagramSessionSurface.COUNTED
+            lastSurfaceRefreshElapsedMillis = 0L
+            return
+        }
+
+        if (!powerManager.isInteractive) return
+
+        val root = rootInActiveWindow
+        if (root == null) {
+            // The active tree can disappear briefly while Instagram redraws.
+            // Pause this tick, but keep the current session instead of resetting it.
+            return
+        }
+        val activePackageName = runCatching {
+            root.packageName?.toString()
+        }.getOrNull()
+        if (activePackageName != SettingsRepository.INSTAGRAM_PACKAGE) {
+            if (instagramWasForeground) {
+                instagramSessionLimitManager.resetCurrentSession()
+            }
+            instagramWasForeground = false
+            instagramSessionSurface = InstagramSessionSurface.COUNTED
+            lastSurfaceRefreshElapsedMillis = 0L
+            return
+        }
+
+        val activeLock = activeLockFor(SettingsRepository.INSTAGRAM_PACKAGE)
+        if (activeLock != null) {
+            enforcePunitiveLock(activeLock)
+            instagramWasForeground = false
+            return
+        }
+
+        if (!instagramWasForeground) {
+            instagramWasForeground = true
+            instagramSessionSurface = instagramSurfaceClassifier.classify(
+                eventClassName = null,
+                root = UiTreeReader.capture(root),
+            )
+            lastSurfaceRefreshElapsedMillis = nowElapsedMillis
+            return
+        }
+
+        if (nowElapsedMillis - lastSurfaceRefreshElapsedMillis >=
+            SESSION_SURFACE_REFRESH_INTERVAL_MS
+        ) {
+            instagramSessionSurface = instagramSurfaceClassifier.classify(
+                eventClassName = null,
+                root = UiTreeReader.capture(root),
+            )
+            lastSurfaceRefreshElapsedMillis = nowElapsedMillis
+        }
+
+        if (instagramSessionSurface != InstagramSessionSurface.COUNTED) return
+
+        val update = instagramSessionLimitManager.recordActiveTime(deltaMillis)
+        update.startedLock?.let { lock ->
+            instagramWasForeground = false
+            startPunitiveLock(lock)
+        }
+    }
+
     private fun scheduleRetryIfNeeded(
         packageName: String,
         eventClassName: String?,
@@ -325,6 +481,7 @@ class ShortFormBlockerService : AccessibilityService() {
 
     override fun onDestroy() {
         cancelPendingScan()
+        mainHandler.removeCallbacks(sessionTicker)
         lastScanAtByPackage.clear()
         blockCoordinator.dispose()
         super.onDestroy()
@@ -348,5 +505,8 @@ class ShortFormBlockerService : AccessibilityService() {
         const val NAVIGATION_RETRY_COUNT = 3
         const val EXIT_CONFIRMATION_TIMEOUT_MS = 1_500L
         const val PUNITIVE_OVERLAY_THROTTLE_MS = 800L
+        const val SESSION_TICK_INTERVAL_MS = 1_000L
+        const val SESSION_SURFACE_REFRESH_INTERVAL_MS = 2_000L
+        const val MAX_SESSION_TICK_DELTA_MS = 2_000L
     }
 }

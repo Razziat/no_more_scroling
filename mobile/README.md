@@ -16,6 +16,10 @@ applications.
 - Message temporaire « Reste concentré ! ».
 - Mode punitif facultatif : une tentative bloque toute la plateforme pendant
   30 minutes, avec minuteur et déblocage manuel.
+- Limite facultative des sessions Instagram : 5 minutes sur le fil d’accueil
+  ou Explorer, avec pause du minuteur dans les messages et les profils.
+- Après un premier dépassement, Instagram est bloqué pendant 30 minutes. Un
+  second dépassement dans la même journée le bloque jusqu’à minuit.
 - Interface française ou anglaise selon la langue Android.
 - Aucune permission Internet et aucune donnée transmise.
 
@@ -53,10 +57,11 @@ l’APK de debug.
 
 1. Ouvrir Anti Scroll.
 2. Choisir les plateformes à protéger.
-3. Activer facultativement le **Mode punitif**.
-4. Appuyer sur **Activer la protection**.
-5. Lire et accepter la déclaration d’utilisation.
-6. Dans les réglages Android, sélectionner **Protection Anti Scroll** et
+3. Activer facultativement les **Sessions de fil limitées à 5 minutes**.
+4. Activer facultativement le **Mode punitif** pour les Shorts et Reels.
+5. Appuyer sur **Activer la protection**.
+6. Lire et accepter la déclaration d’utilisation.
+7. Dans les réglages Android, sélectionner **Protection Anti Scroll** et
    activer le service.
 
 ### APK installé manuellement sur Android 13 ou supérieur
@@ -95,10 +100,12 @@ mobile/android/
 │   │   └── BlockOverlayController.kt
 │   ├── data/
 │   │   ├── SettingsRepository.kt
-│   │   └── PunitiveLockManager.kt
+│   │   ├── PunitiveLockManager.kt
+│   │   └── InstagramSessionLimitManager.kt
 │   ├── detection/
 │   │   ├── YouTubeShortsDetector.kt
 │   │   ├── InstagramReelsDetector.kt
+│   │   ├── InstagramSessionSurfaceClassifier.kt
 │   │   └── ShortFormDetectionEngine.kt
 │   └── ui/theme/
 └── app/src/test/
@@ -109,6 +116,18 @@ Le service ne reçoit que les événements des paquets
 copie limitée de l’arbre d’accessibilité en modèle mémoire, puis exécute les
 détecteurs propres à chaque plateforme. Cette copie est immédiatement
 abandonnée après l’analyse et n’est jamais écrite sur le disque.
+
+Lorsque la limite de session Instagram est active, l’application conserve
+uniquement des compteurs locaux : durée de la session en cours, nombre de
+dépassements du jour et fin d’un éventuel blocage. L’accueil et Explorer sont
+comptés. Les messages et les profils mettent le minuteur en pause. Quitter
+Instagram remet la session en cours à zéro, sans effacer les dépassements déjà
+survenus dans la journée.
+
+La classification dépend de l’interface d’accessibilité exposée par Instagram.
+Par sécurité contre les contournements, un écran Instagram inconnu est compté
+comme du fil jusqu’à ce qu’il soit reconnu comme un écran de messages ou de
+profil.
 
 ## Détection et faux positifs
 
@@ -134,7 +153,8 @@ installées.
 - aucune télémétrie ;
 - aucun compte ;
 - aucun contenu d’interface conservé ;
-- réglages enregistrés uniquement dans les préférences privées Android.
+- réglages et compteurs de session enregistrés uniquement dans les préférences
+  privées Android.
 
 Avant une éventuelle publication sur Google Play, l’utilisation du service
 d’accessibilité devra être déclarée dans Play Console et documentée dans la
