@@ -13,7 +13,6 @@
     formatRemainingTime,
     getActiveLock,
     hasPunitiveBypass,
-    lockSite,
     normalizeLocks
   } = globalThis.AntiScrollLocks;
   const { createBrainAnimation } = globalThis.AntiScrollBrain;
@@ -28,6 +27,12 @@
     brainController: null,
     countdownTimer: null,
     lockExpiresAt: 0,
+    blockedUrl: null,
+    punitiveBypassUrl: null,
+    pendingLockSites: new Set(),
+    loaded: false,
+    settingsRevision: 0,
+    locksRevision: 0,
     mode: null,
     lastObservedUrl: window.location.href,
     pendingMount: null
@@ -53,6 +58,7 @@
     state.blockerShadow = null;
     state.mode = null;
     state.lockExpiresAt = 0;
+    state.blockedUrl = null;
 
     if (state.pendingMount) {
       state.pendingMount.disconnect();
@@ -608,6 +614,7 @@
     state.blockerHost = host;
     state.blockerShadow = shadow;
     state.mode = mode;
+    state.blockedUrl = decision.blockedUrl || null;
     state.lockExpiresAt = mode === "lock" ? decision.expiresAt : 0;
 
     if (mode === "route" || mode === "lock") {
@@ -615,6 +622,12 @@
     }
 
     document.documentElement.append(host);
+
+    // Hiding a page does not stop audio/video playback. Do not automatically
+    // resume it on unlock; leave that choice to the user.
+    for (const media of document.querySelectorAll("video, audio")) {
+      media.pause();
+    }
 
     if (brainCanvas) {
       state.brainController = createBrainAnimation(brainCanvas, {
@@ -673,13 +686,19 @@
   }
 
   function activatePunitiveLock(shortDecision) {
-    const now = Date.now();
-    state.locks = lockSite(state.locks, shortDecision.siteId, now);
-    const lock = getActiveLock(state.locks, shortDecision.siteId, now);
-    const site = getSiteForUrl(shortDecision.blockedUrl);
-
-    chrome.storage.local.set({ [LOCKS_KEY]: state.locks }).catch(() => {});
-    return createLockDecision(site, lock);
+    if (state.pendingLockSites.has(shortDecision.siteId)) return;
+    state.pendingLockSites.add(shortDecision.siteId);
+    // storage.onChanged supplies the authoritative result to every tab. Do not
+    // apply a response snapshot here: it could predate a subsequent unlock.
+    chrome.runtime.sendMessage({
+      type: "ANTI_SCROLL_LOCK",
+      siteId: shortDecision.siteId,
+      url: shortDecision.blockedUrl
+    }).then((response) => {
+      if (!response?.ok) throw new Error("Lock was not saved");
+    }).catch((error) => {
+      console.warn("Anti-scroll: unable to save punitive lock", error);
+    }).finally(() => state.pendingLockSites.delete(shortDecision.siteId));
   }
 
   function evaluateUrl(value, source) {
@@ -703,20 +722,18 @@
     const decision = getBlockDecision(value, state.settings);
 
     if (decision.blocked) {
-      if (
-        state.settings.punitiveMode &&
-        !hasPunitiveBypass(state.locks, decision.siteId, Date.now())
-      ) {
-        const lockDecision = activatePunitiveLock(decision);
-        mountBlocker(lockDecision, "lock");
-        return lockDecision;
-      }
-
       const alreadyShowingSameRoute =
-        state.mode === "route" && decision.blockedUrl === window.location.href;
+        state.mode === "route" && decision.blockedUrl === state.blockedUrl;
 
       if (!alreadyShowingSameRoute) {
         mountBlocker(decision, source === "click" ? "attempt" : "route");
+      }
+      if (
+        state.loaded && state.settings.punitiveMode &&
+        state.punitiveBypassUrl !== decision.blockedUrl &&
+        !hasPunitiveBypass(state.locks, decision.siteId, Date.now())
+      ) {
+        activatePunitiveLock(decision);
       }
       return decision;
     }
@@ -729,6 +746,9 @@
   }
 
   function evaluateCurrentLocation(source) {
+    if (state.lastObservedUrl !== window.location.href) {
+      state.punitiveBypassUrl = null;
+    }
     state.lastObservedUrl = window.location.href;
     return evaluateUrl(window.location.href, source);
   }
@@ -756,31 +776,64 @@
 
     event.preventDefault();
     event.stopImmediatePropagation();
+    state.punitiveBypassUrl = null;
     evaluateUrl(link.href, "click");
   }
 
+  function applyStoredLocks(value) {
+    const nextLocks = normalizeLocks(value);
+    const decision = getBlockDecision(window.location.href, state.settings);
+    if (decision.blocked) {
+      const previous = state.locks.sites[decision.siteId];
+      const next = nextLocks.sites[decision.siteId];
+      if (next.expiresAt === 0 && (
+        (state.loaded && next.punitiveBypassUntil > previous.punitiveBypassUntil) ||
+        hasPunitiveBypass(nextLocks, decision.siteId)
+      )) {
+        // This exemption lasts for this navigation, not just the storage grace
+        // period. An unrelated setting/lock change must never punish it again.
+        state.punitiveBypassUrl = window.location.href;
+      }
+    }
+    state.locks = nextLocks;
+  }
+
   async function loadStoredState() {
+    const settingsRevision = state.settingsRevision;
+    const locksRevision = state.locksRevision;
     try {
       const stored = await chrome.storage.local.get([SETTINGS_KEY, LOCKS_KEY]);
-      state.settings = normalizeSettings(stored[SETTINGS_KEY]);
-      state.locks = normalizeLocks(stored[LOCKS_KEY]);
+      // A read started at document_start must not undo a newer onChanged
+      // notification (for example, an unlock while this tab is initializing).
+      if (settingsRevision === state.settingsRevision) {
+        state.settings = normalizeSettings(stored[SETTINGS_KEY]);
+      }
+      if (locksRevision === state.locksRevision) {
+        applyStoredLocks(stored[LOCKS_KEY]);
+      }
     } catch (_error) {
-      state.settings = cloneDefaultSettings();
-      state.locks = cloneDefaultLocks();
+      if (settingsRevision === state.settingsRevision) state.settings = cloneDefaultSettings();
+      if (locksRevision === state.locksRevision) state.locks = cloneDefaultLocks();
     }
 
+    state.loaded = true;
     evaluateCurrentLocation("settings-loaded");
   }
 
   document.addEventListener("click", interceptNavigation, true);
   document.addEventListener("auxclick", interceptNavigation, true);
+  document.addEventListener("play", (event) => {
+    if (state.blockerHost && event.target instanceof HTMLMediaElement) {
+      event.target.pause();
+    }
+  }, true);
 
   window.addEventListener("popstate", () => evaluateCurrentLocation("popstate"));
   window.addEventListener("hashchange", () => evaluateCurrentLocation("hashchange"));
 
   chrome.runtime.onMessage.addListener((message) => {
     if (message?.type === "ANTI_SCROLL_ROUTE_CHANGED" && message.url) {
-      evaluateUrl(message.url, "web-navigation");
+      evaluateCurrentLocation("web-navigation");
     }
   });
 
@@ -792,12 +845,14 @@
     let shouldEvaluate = false;
 
     if (changes[SETTINGS_KEY]) {
+      state.settingsRevision += 1;
       state.settings = normalizeSettings(changes[SETTINGS_KEY].newValue);
       shouldEvaluate = true;
     }
 
     if (changes[LOCKS_KEY]) {
-      state.locks = normalizeLocks(changes[LOCKS_KEY].newValue);
+      state.locksRevision += 1;
+      applyStoredLocks(changes[LOCKS_KEY].newValue);
       shouldEvaluate = true;
     }
 

@@ -20,7 +20,7 @@
   });
 
   function normalizeSettings(value) {
-    const sites = value && typeof value.sites === "object" ? value.sites : {};
+    const sites = value?.sites && typeof value.sites === "object" ? value.sites : {};
 
     return {
       punitiveMode:

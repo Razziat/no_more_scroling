@@ -27,7 +27,7 @@
   }
 
   function normalizeLocks(value) {
-    const sites = value && typeof value.sites === "object" ? value.sites : {};
+    const sites = value?.sites && typeof value.sites === "object" ? value.sites : {};
     const normalizedSites = {};
 
     for (const siteId of SITE_IDS) {
@@ -58,7 +58,7 @@
   function lockSite(value, siteId, now = Date.now()) {
     const locks = normalizeLocks(value);
 
-    if (!SITE_IDS.includes(siteId)) {
+    if (!SITE_IDS.includes(siteId) || getActiveLock(locks, siteId, now)) {
       return locks;
     }
 

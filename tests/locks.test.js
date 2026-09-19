@@ -15,6 +15,15 @@ const {
   unlockSite
 } = require("../src/core/locks.js");
 
+test("accepte un objet sites nul", () => {
+  assert.deepEqual(normalizeLocks({ sites: null }), cloneDefaultLocks());
+});
+
+test("une nouvelle demande ne prolonge pas une sanction active", () => {
+  const locked = lockSite(cloneDefaultLocks(), "youtube", 1_000);
+  assert.deepEqual(lockSite(locked, "youtube", 5_000), locked);
+});
+
 test("crée un verrou de 30 minutes pour un seul site", () => {
   const now = 1_800_000_000_000;
   const locks = lockSite(cloneDefaultLocks(), "youtube", now);

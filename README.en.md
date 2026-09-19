@@ -110,6 +110,12 @@ interface.
 
 ## Tests
 
+The test suite includes asynchronous worker/content-script integration scenarios
+for concurrent locks, manual unlocks and storage failures. Lock mutations are
+serialized by the service worker. Pull requests run the extension tests and
+Android tests, lint and debug build. See the [validation guide](docs/VALIDATION.md)
+(French) for browser/device checks and performance measurements.
+
 The project has no runtime dependencies. With Node.js 18 or newer:
 
 ```bash

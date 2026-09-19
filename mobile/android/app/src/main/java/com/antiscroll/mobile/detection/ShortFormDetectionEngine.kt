@@ -6,6 +6,11 @@ class ShortFormDetectionEngine(
         InstagramReelsDetector(),
     ),
 ) {
+    /** Deferred scans must only use evidence from the window captured now. */
+    fun detectCurrentWindow(packageName: String, root: UiNodeSnapshot): ShortFormDetection? =
+        if (root.visibleToUser) detect(DetectionContext(packageName, root.className, root))
+        else null
+
     fun detectEventClass(
         packageName: String,
         eventClassName: String?,

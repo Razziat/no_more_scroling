@@ -1,12 +1,21 @@
 package com.antiscroll.mobile.data
 
 import android.content.Context
+import android.content.SharedPreferences
 
 class SettingsRepository(context: Context) {
     private val preferences = context.applicationContext.getSharedPreferences(
         PREFERENCES_NAME,
         Context.MODE_PRIVATE,
     )
+
+    fun registerListener(listener: SharedPreferences.OnSharedPreferenceChangeListener) {
+        preferences.registerOnSharedPreferenceChangeListener(listener)
+    }
+
+    fun unregisterListener(listener: SharedPreferences.OnSharedPreferenceChangeListener) {
+        preferences.unregisterOnSharedPreferenceChangeListener(listener)
+    }
 
     var youtubeBlockingEnabled: Boolean
         get() = preferences.getBoolean(KEY_YOUTUBE_ENABLED, true)

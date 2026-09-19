@@ -109,7 +109,14 @@ Le projet ne nécessite aucune dépendance. Avec Node.js 18 ou plus récent :
 npm test
 ```
 
-Les tests couvrent les routes bloquées, les routes autorisées, les sous-domaines, les faux domaines et la désactivation par plateforme.
+Les tests couvrent les routes, les réglages et les sanctions, ainsi que les
+interactions entre le service worker et plusieurs onglets avec un stockage
+asynchrone simulé. Les écritures des sanctions sont centralisées dans le service
+worker pour éviter qu'un onglet écrase l'état d'un autre.
+
+Les vérifications sont également exécutées sur les pull requests. Le
+[protocole de validation](docs/VALIDATION.md) décrit les essais navigateur,
+Android et les mesures de performance à réaliser avant publication.
 
 ## Limites actuelles
 

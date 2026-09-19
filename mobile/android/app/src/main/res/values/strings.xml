@@ -44,8 +44,9 @@
     <string name="block_overlay_title">Stay focused!</string>
     <string name="youtube_blocked_overlay">YouTube Shorts are unavailable</string>
     <string name="instagram_blocked_overlay">Instagram Reels are unavailable</string>
-    <string name="punitive_overlay_title">Stay focused!</string>
-    <string name="punitive_youtube_blocked">YouTube is blocked</string>
-    <string name="punitive_instagram_blocked">Instagram is blocked</string>
-    <string name="punitive_time_remaining">Time remaining</string>
+    <string name="punitive_notice_started">%1$s blocked for %2$s</string>
+    <string name="punitive_notice_remaining">%1$s blocked — %2$s left</string>
+    <string name="notice_duration_minutes">%1$d min</string>
+    <string name="notice_duration_hours_minutes">%1$d h %2$02d min</string>
+    <string name="notice_duration_less_than_minute">less than a minute</string>
 </resources>

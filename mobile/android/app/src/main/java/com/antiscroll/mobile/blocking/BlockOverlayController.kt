@@ -1,11 +1,12 @@
 package com.antiscroll.mobile.blocking
 
-import android.content.Context
+import android.accessibilityservice.AccessibilityService
 import android.graphics.Color
 import android.graphics.PixelFormat
 import android.graphics.drawable.GradientDrawable
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
@@ -14,16 +15,18 @@ import android.widget.TextView
 import com.antiscroll.mobile.R
 import com.antiscroll.mobile.data.SettingsRepository
 import com.antiscroll.mobile.detection.BlockedSurface
-import java.util.Locale
 
-class BlockOverlayController(context: Context) {
+class BlockOverlayController(context: AccessibilityService) {
     private val appContext = context.applicationContext
-    private val windowManager = appContext.getSystemService(WindowManager::class.java)
+    // AccessibilityService's WindowManager carries its accessibility overlay
+    // token. The application WindowManager does not have that token.
+    private val windowManager = context.getSystemService(WindowManager::class.java)
     private val handler = Handler(Looper.getMainLooper())
+    private val foreground = ForegroundAppReader(context)
 
     private var currentView: View? = null
     private var hideRunnable: Runnable? = null
-    private var countdownRunnable: Runnable? = null
+    private var currentPunitivePackage: String? = null
 
     fun show(surface: BlockedSurface) {
         dismiss()
@@ -82,6 +85,8 @@ class BlockOverlayController(context: Context) {
         val wasAdded = runCatching {
             windowManager.addView(container, layoutParams)
             true
+        }.onFailure { error ->
+            Log.e(TAG, "Unable to show blocking overlay", error)
         }.getOrDefault(false)
 
         if (!wasAdded) return
@@ -92,68 +97,38 @@ class BlockOverlayController(context: Context) {
         }
     }
 
-    fun showPunitive(packageName: String, blockedUntilMillis: Long) {
+    /** A static notice; its fixed lifetime is managed by BlockCoordinator. */
+    fun showPunitive(packageName: String, blockedUntilMillis: Long, newPenalty: Boolean) {
+        val remaining = blockedUntilMillis - System.currentTimeMillis()
+        // A replacement owns a new deadline; always remove the previous notice
+        // even if the foreground changes before this second check.
         dismiss()
+        if (!foreground.isPackageActive(packageName) || remaining <= 0L) return
 
-        val container = LinearLayout(appContext).apply {
-            orientation = LinearLayout.VERTICAL
-            gravity = Gravity.CENTER_HORIZONTAL
-            minimumWidth = 280.dp
-            setPadding(28.dp, 24.dp, 28.dp, 24.dp)
-            elevation = 16.dp.toFloat()
-            background = GradientDrawable().apply {
-                shape = GradientDrawable.RECTANGLE
-                cornerRadius = 28.dp.toFloat()
-                setColor(Color.rgb(23, 29, 26))
-                setStroke(1.dp, Color.rgb(65, 82, 72))
-            }
-            contentDescription = appContext.getString(R.string.punitive_overlay_title)
-            accessibilityLiveRegion = View.ACCESSIBILITY_LIVE_REGION_ASSERTIVE
+        val platform = when (packageName) {
+            SettingsRepository.YOUTUBE_PACKAGE -> "YouTube"
+            SettingsRepository.INSTAGRAM_PACKAGE -> "Instagram"
+            else -> appContext.getString(R.string.app_name)
         }
-
-        container.addView(
-            TextView(appContext).apply {
-                text = appContext.getString(R.string.punitive_overlay_title)
-                setTextColor(Color.WHITE)
-                textSize = 22f
-                gravity = Gravity.CENTER
-                setTypeface(typeface, android.graphics.Typeface.BOLD)
-            },
+        val message = appContext.getString(
+            if (newPenalty) R.string.punitive_notice_started else R.string.punitive_notice_remaining,
+            platform,
+            formatRemaining(remaining),
         )
-        container.addView(
-            TextView(appContext).apply {
-                text = appContext.getString(
-                    when (packageName) {
-                        SettingsRepository.YOUTUBE_PACKAGE -> R.string.punitive_youtube_blocked
-                        SettingsRepository.INSTAGRAM_PACKAGE -> R.string.punitive_instagram_blocked
-                        else -> R.string.app_name
-                    },
-                )
-                setTextColor(Color.rgb(192, 201, 194))
-                textSize = 15f
-                gravity = Gravity.CENTER
-                setPadding(0, 8.dp, 0, 0)
-            },
-        )
-        container.addView(
-            TextView(appContext).apply {
-                text = appContext.getString(R.string.punitive_time_remaining)
-                setTextColor(Color.rgb(121, 214, 166))
-                textSize = 12f
-                gravity = Gravity.CENTER
-                setPadding(0, 18.dp, 0, 0)
-            },
-        )
-        val countdownText = TextView(appContext).apply {
+        val notice = TextView(appContext).apply {
+            text = message
             setTextColor(Color.WHITE)
-            textSize = 38f
+            textSize = 15f
             gravity = Gravity.CENTER
-            letterSpacing = 0.08f
-            setTypeface(typeface, android.graphics.Typeface.BOLD)
-            setPadding(0, 2.dp, 0, 0)
+            maxWidth = (appContext.resources.displayMetrics.widthPixels - 32.dp).coerceAtLeast(1)
+            setPadding(20.dp, 14.dp, 20.dp, 14.dp)
+            elevation = 8.dp.toFloat()
+            background = GradientDrawable().apply {
+                cornerRadius = 18.dp.toFloat()
+                setColor(Color.rgb(23, 29, 26))
+            }
+            accessibilityLiveRegion = View.ACCESSIBILITY_LIVE_REGION_POLITE
         }
-        container.addView(countdownText)
-
         val layoutParams = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.WRAP_CONTENT,
@@ -163,64 +138,50 @@ class BlockOverlayController(context: Context) {
                 WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
             PixelFormat.TRANSLUCENT,
         ).apply {
-            gravity = Gravity.CENTER
+            gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL
+            y = 52.dp
         }
-
-        val wasAdded = runCatching {
-            windowManager.addView(container, layoutParams)
-            true
-        }.getOrDefault(false)
-
-        if (!wasAdded) return
-
-        currentView = container
-        countdownRunnable = object : Runnable {
-            override fun run() {
-                if (currentView !== container) return
-                val remaining = (blockedUntilMillis - System.currentTimeMillis()).coerceAtLeast(0L)
-                countdownText.text = formatRemaining(remaining)
-                if (remaining > 0L) {
-                    handler.postDelayed(this, COUNTDOWN_TICK_MS)
-                } else {
-                    dismiss()
-                }
+        runCatching { windowManager.addView(notice, layoutParams) }
+            .onSuccess {
+                currentView = notice
+                currentPunitivePackage = packageName
             }
-        }.also { runnable -> handler.post(runnable) }
-        hideRunnable = Runnable(::dismiss).also { runnable ->
-            handler.postDelayed(runnable, PUNITIVE_DISPLAY_DURATION_MS)
-        }
+            .onFailure { error -> Log.e(TAG, "Unable to show punitive notice", error) }
+    }
+
+    fun dismissPunitive(packageName: String) {
+        if (currentPunitivePackage == packageName) dismiss()
     }
 
     fun dismiss() {
         hideRunnable?.let(handler::removeCallbacks)
         hideRunnable = null
-        countdownRunnable?.let(handler::removeCallbacks)
-        countdownRunnable = null
 
         currentView?.let { view ->
             runCatching { windowManager.removeView(view) }
+                .onFailure { error -> Log.e(TAG, "Unable to remove blocking overlay", error) }
         }
         currentView = null
+        currentPunitivePackage = null
     }
 
     private val Int.dp: Int
         get() = (this * appContext.resources.displayMetrics.density).toInt()
 
     private fun formatRemaining(remainingMillis: Long): String {
-        val totalSeconds = (remainingMillis + 999L) / 1_000L
-        val hours = totalSeconds / 3_600L
-        val minutes = (totalSeconds % 3_600L) / 60L
-        val seconds = totalSeconds % 60L
-        return if (hours > 0L) {
-            String.format(Locale.ROOT, "%d:%02d:%02d", hours, minutes, seconds)
+        if (remainingMillis < 60_000L) {
+            return appContext.getString(R.string.notice_duration_less_than_minute)
+        }
+        val minutes = (remainingMillis + 59_999L) / 60_000L
+        return if (minutes >= 60L) {
+            appContext.getString(R.string.notice_duration_hours_minutes, minutes / 60L, minutes % 60L)
         } else {
-            String.format(Locale.ROOT, "%02d:%02d", minutes, seconds)
+            appContext.getString(R.string.notice_duration_minutes, minutes)
         }
     }
 
     private companion object {
+        const val TAG = "BlockOverlay"
         const val DISPLAY_DURATION_MS = 2_400L
-        const val PUNITIVE_DISPLAY_DURATION_MS = 5_000L
-        const val COUNTDOWN_TICK_MS = 1_000L
     }
 }

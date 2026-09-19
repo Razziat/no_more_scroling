@@ -25,6 +25,10 @@ Reels** viewers while keeping the other parts of both applications available.
 A new attempt during a penalty does not extend the 30 minutes. It only shows
 the remaining time.
 
+A discreet, static notice stays visible for three seconds after the blocked app
+closes. It shows the duration when the penalty starts and the remaining time on
+later attempts. The detailed countdown and manual unlock remain in Anti Scroll.
+
 In punitive mode, Anti Scroll leaves the sanctioned application with Android’s
 **Back** action. It does not trigger **Home**, so the launcher page or
 application that was visible before opening it is preserved.
@@ -122,7 +126,7 @@ counted as feed time until it is recognized as messages or a profile.
 The detectors prioritize:
 
 - view identifiers specific to the Shorts or Reels viewer;
-- an Android screen name when it is explicit enough;
+- the current window root class when it is explicit enough;
 - the selected state of the Shorts or Reels tab;
 - explicit player descriptions.
 

@@ -26,6 +26,11 @@ applications.
 Une nouvelle tentative pendant une sanction ne prolonge pas les 30 minutes :
 elle affiche uniquement le temps restant.
 
+Un message discret reste visible pendant trois secondes après la fermeture de
+l’application bloquée. Il indique la durée au début de la sanction, puis le temps
+restant lors des tentatives suivantes. Le minuteur détaillé et le déblocage manuel
+restent disponibles dans Anti Scroll.
+
 En mode punitif, Anti Scroll quitte l’application sanctionnée avec l’action
 Android **Retour**. Il ne déclenche pas l’action **Accueil** : la page du bureau
 ou l’application visible avant l’ouverture est donc conservée.
@@ -134,7 +139,7 @@ profil.
 Les détecteurs utilisent en priorité :
 
 - les identifiants de vues propres aux lecteurs Shorts ou Reels ;
-- le nom de l’écran Android lorsqu’il est suffisamment explicite ;
+- la classe de la racine de l’écran actuel lorsqu’elle est suffisamment explicite ;
 - l’état sélectionné de l’onglet Shorts ou Reels ;
 - des descriptions explicites du lecteur.
 

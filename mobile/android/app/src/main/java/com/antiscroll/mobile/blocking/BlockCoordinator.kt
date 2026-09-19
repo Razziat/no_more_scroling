@@ -1,30 +1,29 @@
 package com.antiscroll.mobile.blocking
 
 import android.accessibilityservice.AccessibilityService
-import android.os.Handler
-import android.os.Looper
-import android.os.SystemClock
 import com.antiscroll.mobile.detection.ShortFormDetection
 
-class BlockCoordinator(
-    private val service: AccessibilityService,
-    private val overlayController: BlockOverlayController,
-) {
-    private val mainHandler = Handler(Looper.getMainLooper())
+class BlockCoordinator internal constructor(private val environment: BlockEnvironment) {
+    constructor(service: AccessibilityService, overlayController: BlockOverlayController) :
+        this(AndroidBlockEnvironment(service, overlayController))
+
     private val pendingExitChecks = mutableMapOf<String, Runnable>()
     private val lastBackAtByPackage = mutableMapOf<String, Long>()
+    private var pendingNoticeDismissal: Runnable? = null
+    private var noticePackage: String? = null
+    private var noticeBlockedUntil = 0L
 
     fun block(detection: ShortFormDetection) {
-        service.performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK)
-        overlayController.show(detection.surface)
+        cancelNoticeDismissal()
+        environment.performBack()
+        environment.showNormal(detection.surface)
     }
 
     fun startPunitiveLock(
         packageName: String,
         blockedUntilMillis: Long,
     ) {
-        requestPackageExit(packageName)
-        overlayController.showPunitive(packageName, blockedUntilMillis)
+        handlePunitiveLock(packageName, blockedUntilMillis, showOverlay = true, newPenalty = true)
     }
 
     fun enforcePunitiveLock(
@@ -32,16 +31,53 @@ class BlockCoordinator(
         blockedUntilMillis: Long,
         showOverlay: Boolean,
     ) {
+        handlePunitiveLock(packageName, blockedUntilMillis, showOverlay, newPenalty = false)
+    }
+
+    private fun handlePunitiveLock(
+        packageName: String,
+        blockedUntilMillis: Long,
+        showOverlay: Boolean,
+        newPenalty: Boolean,
+    ) {
+        // A background content event does not mean the user reopened the app.
+        if (!environment.isPackageActive(packageName)) {
+            pendingExitChecks.remove(packageName)?.let(environment::removeCallback)
+            return
+        }
         requestPackageExit(packageName)
         if (showOverlay) {
-            overlayController.showPunitive(packageName, blockedUntilMillis)
+            showNotice(packageName, blockedUntilMillis, newPenalty)
         }
     }
 
+    private fun showNotice(packageName: String, blockedUntilMillis: Long, newPenalty: Boolean) {
+        // Repeated accessibility events must not prolong the notice on the launcher.
+        if (pendingNoticeDismissal != null && noticePackage == packageName &&
+            noticeBlockedUntil == blockedUntilMillis
+        ) return
+        cancelNoticeDismissal()
+        environment.showPunitive(packageName, blockedUntilMillis, newPenalty)
+        noticePackage = packageName
+        noticeBlockedUntil = blockedUntilMillis
+        pendingNoticeDismissal = Runnable {
+            environment.dismissPunitive(packageName)
+            pendingNoticeDismissal = null
+            noticePackage = null
+        }.also { environment.postDelayed(it, NOTICE_DURATION_MS) }
+    }
+
+    private fun cancelNoticeDismissal() {
+        pendingNoticeDismissal?.let(environment::removeCallback)
+        pendingNoticeDismissal = null
+        noticePackage = null
+    }
+
     fun dispose() {
-        pendingExitChecks.values.forEach(mainHandler::removeCallbacks)
+        cancelNoticeDismissal()
+        pendingExitChecks.values.forEach(environment::removeCallback)
         pendingExitChecks.clear()
-        overlayController.dismiss()
+        environment.dismiss()
     }
 
     /**
@@ -70,9 +106,15 @@ class BlockCoordinator(
     ) {
         val check = Runnable {
             pendingExitChecks.remove(packageName)
-            if (!isPackageActive(packageName)) return@Runnable
+            if (!environment.isPackageActive(packageName)) {
+                return@Runnable
+            }
 
-            val now = SystemClock.uptimeMillis()
+            // Verify the final Back too, without issuing an extra Back action.
+            // The notice has its own deadline and remains readable after exit.
+            if (attemptsRemaining <= 0) return@Runnable
+
+            val now = environment.uptimeMillis()
             val lastBackAt = lastBackAtByPackage[packageName]
             val cooldownRemaining = lastBackAt?.let {
                 BACK_ACTION_COOLDOWN_MS - (now - it)
@@ -82,29 +124,22 @@ class BlockCoordinator(
                 return@Runnable
             }
 
-            val actionPerformed = service.performGlobalAction(
-                AccessibilityService.GLOBAL_ACTION_BACK,
-            )
+            val actionPerformed = environment.performBack()
             if (actionPerformed) lastBackAtByPackage[packageName] = now
 
-            if (attemptsRemaining > 1) {
-                scheduleExitCheck(
-                    packageName = packageName,
-                    delayMs = EXIT_VERIFICATION_DELAY_MS,
-                    attemptsRemaining = attemptsRemaining - 1,
-                )
-            }
+            scheduleExitCheck(
+                packageName = packageName,
+                delayMs = EXIT_VERIFICATION_DELAY_MS,
+                attemptsRemaining = attemptsRemaining - 1,
+            )
         }
 
         pendingExitChecks[packageName] = check
-        mainHandler.postDelayed(check, delayMs)
+        environment.postDelayed(check, delayMs)
     }
 
-    private fun isPackageActive(packageName: String): Boolean = runCatching {
-        service.rootInActiveWindow?.packageName?.toString() == packageName
-    }.getOrDefault(false)
-
     private companion object {
+        const val NOTICE_DURATION_MS = 3_000L
         const val MAX_BACK_ATTEMPTS_PER_REQUEST = 2
         const val BACK_ACTION_COOLDOWN_MS = 180L
         const val EXIT_VERIFICATION_DELAY_MS = 260L

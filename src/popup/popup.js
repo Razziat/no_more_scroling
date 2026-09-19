@@ -11,8 +11,7 @@
     cloneDefaultLocks,
     formatRemainingTime,
     getActiveLock,
-    normalizeLocks,
-    unlockSite
+    normalizeLocks
   } = globalThis.AntiScrollLocks;
   const { locale, t } = globalThis.AntiScrollI18n.createI18n();
 
@@ -100,9 +99,12 @@
   }
 
   async function manuallyUnlock(siteId) {
-    currentLocks = unlockSite(currentLocks, siteId, Date.now());
-    render();
-    await chrome.storage.local.set({ [LOCKS_KEY]: currentLocks });
+    const response = await chrome.runtime.sendMessage({
+      type: "ANTI_SCROLL_UNLOCK",
+      siteId
+    });
+    if (!response?.ok) throw new Error("Unable to unlock platform");
+    await load();
   }
 
   async function load() {

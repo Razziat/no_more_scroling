@@ -151,4 +151,43 @@ class InstagramSessionSurfaceClassifierTest {
 
         assertEquals(InstagramSessionSurface.COUNTED, result)
     }
+
+    @Test
+    fun `confirmed home feed wins over an embedded profile marker`() {
+        val result = classifier.classify(
+            eventClassName = "android.widget.FrameLayout",
+            root = UiNodeSnapshot(
+                children = listOf(
+                    UiNodeSnapshot(
+                        contentDescription = "Home",
+                        selected = true,
+                    ),
+                    UiNodeSnapshot(
+                        resourceId = "com.instagram.android:id/feed_recycler",
+                    ),
+                    UiNodeSnapshot(
+                        resourceId = "com.instagram.android:id/profile_header",
+                    ),
+                ),
+            ),
+        )
+
+        assertEquals(InstagramSessionSurface.COUNTED, result)
+    }
+
+    @Test
+    fun `stale direct event class does not pause a confirmed feed`() {
+        val result = classifier.classify(
+            eventClassName = "com.instagram.direct.inbox.DirectInboxActivity",
+            root = UiNodeSnapshot(
+                children = listOf(
+                    UiNodeSnapshot(
+                        resourceId = "com.instagram.android:id/feed_recycler",
+                    ),
+                ),
+            ),
+        )
+
+        assertEquals(InstagramSessionSurface.COUNTED, result)
+    }
 }

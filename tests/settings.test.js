@@ -8,6 +8,10 @@ const {
   normalizeSettings
 } = require("../src/core/settings.js");
 
+test("accepte un objet sites nul sans interrompre le chargement", () => {
+  assert.deepEqual(normalizeSettings({ sites: null }), cloneDefaultSettings());
+});
+
 test("active les deux plateformes par défaut", () => {
   assert.deepEqual(cloneDefaultSettings(), {
     punitiveMode: false,

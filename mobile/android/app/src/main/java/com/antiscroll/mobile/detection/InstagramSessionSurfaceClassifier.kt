@@ -14,8 +14,8 @@ class InstagramSessionSurfaceClassifier {
         eventClassName: String?,
         root: UiNodeSnapshot?,
     ): InstagramSessionSurface {
-        classifyEventClass(eventClassName)?.let { return it }
-        if (root == null) return InstagramSessionSurface.COUNTED
+        val eventClassSurface = classifyEventClass(eventClassName)
+        if (root == null) return eventClassSurface ?: InstagramSessionSurface.COUNTED
 
         var profileSelected = false
         var messagesSelected = false
@@ -63,12 +63,18 @@ class InstagramSessionSurfaceClassifier {
         }
 
         return when {
-            messagesResourceFound || messagesSelected ->
+            messagesSelected ->
                 InstagramSessionSurface.PAUSED_MESSAGES
-            profileResourceFound || profileSelected ->
+            profileSelected ->
                 InstagramSessionSurface.PAUSED_PROFILE
-            countedResourceFound || countedTabSelected ->
+            countedTabSelected || countedResourceFound ->
                 InstagramSessionSurface.COUNTED
+            messagesResourceFound ->
+                InstagramSessionSurface.PAUSED_MESSAGES
+            profileResourceFound ->
+                InstagramSessionSurface.PAUSED_PROFILE
+            eventClassSurface != null ->
+                eventClassSurface
             messageScreenScore >= 2 ->
                 InstagramSessionSurface.PAUSED_MESSAGES
             profileScreenScore >= 3 ->
