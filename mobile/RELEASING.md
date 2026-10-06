@@ -100,6 +100,11 @@ Le workflow `.github/workflows/android-release.yml` effectue alors :
 
 ### 3. Publier le brouillon
 
+Pour relancer uniquement la construction d’une version déjà taguée, ouvrir
+**Actions > Android release > Run workflow** et sélectionner son tag
+`android-vX.Y.Z`. Le lancement manuel conserve les mêmes vérifications de
+version, de tests et de signature. Choisir le tag, pas la branche `main`.
+
 Dans **GitHub > Releases**, ouvrir le brouillon créé automatiquement :
 
 - relire les notes générées ;
