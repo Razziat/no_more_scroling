@@ -54,8 +54,9 @@ Réaliser ces essais sur au moins un appareil modeste et un appareil récent.
    plus à bloquer. Vérifier en particulier les versions aux identifiants de vues
    obfusqués et les ouvertures depuis un lien externe.
 4. Alterner fil/Explorer, messages, profils, clavier, panneau système et autre
-   application. Vérifier le comptage, les pauses et la remise à zéro après une
-   sortie stable d'Instagram (cinq secondes).
+   application. Consommer deux minutes puis quitter Instagram, attendre plus de
+   cinq secondes puis refaire l’essai après une longue pause. Il doit rester
+   trois minutes au retour dans la même journée, sans compter le temps d’absence.
 5. Désactiver/réactiver la limite de session, éteindre/rallumer l'écran, puis
    relancer le service. Le minuteur doit reprendre uniquement quand nécessaire.
 6. Tester le premier dépassement, le second dépassement, l'expiration, le passage

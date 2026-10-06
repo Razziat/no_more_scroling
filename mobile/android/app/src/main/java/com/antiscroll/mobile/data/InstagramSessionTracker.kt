@@ -9,7 +9,6 @@ enum class InstagramSessionObservation {
 
 data class InstagramSessionTrackingDecision(
     val activeMillis: Long = 0L,
-    val shouldResetSession: Boolean = false,
 )
 
 /**
@@ -17,16 +16,13 @@ data class InstagramSessionTrackingDecision(
  *
  * Android can temporarily expose no active root, or a system window, while an
  * application redraws. UNKNOWN observations therefore keep a short recoverable
- * interval, while OUTSIDE must remain stable before a real session reset.
+ * interval. Leaving Instagram pauses counting without clearing accumulated time.
  */
 class InstagramSessionTracker(
-    private val exitConfirmationMillis: Long = DEFAULT_EXIT_CONFIRMATION_MILLIS,
     private val unknownRecoveryMillis: Long = DEFAULT_UNKNOWN_RECOVERY_MILLIS,
 ) {
     private var lastObservationAtMillis: Long? = null
     private var previousObservation = InstagramSessionObservation.UNKNOWN
-    private var outsideSinceMillis: Long? = null
-    private var outsideResetIssued = false
     private var unknownSinceMillis: Long? = null
     private var recoverableUnknownMillis = 0L
 
@@ -47,7 +43,7 @@ class InstagramSessionTracker(
         return when (observation) {
             InstagramSessionObservation.COUNTED -> onCounted(nowElapsedMillis, deltaMillis)
             InstagramSessionObservation.PAUSED -> onPaused()
-            InstagramSessionObservation.OUTSIDE -> onOutside(nowElapsedMillis)
+            InstagramSessionObservation.OUTSIDE -> onPaused()
             InstagramSessionObservation.UNKNOWN -> onUnknown(nowElapsedMillis, deltaMillis)
         }
     }
@@ -60,16 +56,12 @@ class InstagramSessionTracker(
     fun suspend(nowElapsedMillis: Long) {
         lastObservationAtMillis = nowElapsedMillis
         previousObservation = InstagramSessionObservation.PAUSED
-        outsideSinceMillis = null
-        outsideResetIssued = false
         clearUnknownRecovery()
     }
 
     fun reset(nowElapsedMillis: Long) {
         lastObservationAtMillis = nowElapsedMillis
         previousObservation = InstagramSessionObservation.UNKNOWN
-        outsideSinceMillis = null
-        outsideResetIssued = false
         clearUnknownRecovery()
     }
 
@@ -77,8 +69,6 @@ class InstagramSessionTracker(
         nowElapsedMillis: Long,
         deltaMillis: Long,
     ): InstagramSessionTrackingDecision {
-        outsideSinceMillis = null
-        outsideResetIssued = false
 
         val activeMillis = when (previousObservation) {
             InstagramSessionObservation.COUNTED -> deltaMillis
@@ -97,29 +87,8 @@ class InstagramSessionTracker(
 
     private fun onPaused(): InstagramSessionTrackingDecision {
         previousObservation = InstagramSessionObservation.PAUSED
-        outsideSinceMillis = null
-        outsideResetIssued = false
         clearUnknownRecovery()
         return InstagramSessionTrackingDecision()
-    }
-
-    private fun onOutside(nowElapsedMillis: Long): InstagramSessionTrackingDecision {
-        clearUnknownRecovery()
-
-        if (previousObservation != InstagramSessionObservation.OUTSIDE ||
-            outsideSinceMillis == null
-        ) {
-            outsideSinceMillis = nowElapsedMillis
-            outsideResetIssued = false
-        }
-
-        val outsideSince = outsideSinceMillis ?: nowElapsedMillis
-        val shouldReset = !outsideResetIssued &&
-            nowElapsedMillis - outsideSince >= exitConfirmationMillis
-        if (shouldReset) outsideResetIssued = true
-
-        previousObservation = InstagramSessionObservation.OUTSIDE
-        return InstagramSessionTrackingDecision(shouldResetSession = shouldReset)
     }
 
     private fun onUnknown(
@@ -174,7 +143,6 @@ class InstagramSessionTracker(
     }
 
     companion object {
-        const val DEFAULT_EXIT_CONFIRMATION_MILLIS = 5_000L
         const val DEFAULT_UNKNOWN_RECOVERY_MILLIS = 5_000L
     }
 }

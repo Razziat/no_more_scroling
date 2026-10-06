@@ -143,14 +143,6 @@ class InstagramSessionLimitManager(
     }
 
     @Synchronized
-    fun resetCurrentSession(nowMillis: Long = System.currentTimeMillis()) {
-        val state = normalizedState(nowMillis)
-        if (state.sessionUsedMillis != 0L) {
-            writeState(state.copy(sessionUsedMillis = 0L))
-        }
-    }
-
-    @Synchronized
     fun clearAll() {
         preferences.edit().clear().apply()
     }

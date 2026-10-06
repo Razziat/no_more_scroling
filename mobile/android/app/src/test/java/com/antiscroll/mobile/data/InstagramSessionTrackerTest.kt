@@ -1,8 +1,6 @@
 package com.antiscroll.mobile.data
 
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class InstagramSessionTrackerTest {
@@ -25,24 +23,36 @@ class InstagramSessionTrackerTest {
         val outside = tracker.observe(3_000L, InstagramSessionObservation.OUTSIDE)
         val resumed = tracker.observe(5_000L, InstagramSessionObservation.COUNTED)
 
-        assertFalse(outside.shouldResetSession)
-        assertFalse(resumed.shouldResetSession)
+        assertEquals(0L, outside.activeMillis)
         assertEquals(0L, resumed.activeMillis)
     }
 
     @Test
-    fun `stable exit resets the current session once`() {
+    fun `usage accumulates across long breaks and triggers the first penalty`() {
         val tracker = tracker()
+        val day = "2026-10-02"
+        var state = InstagramSessionLimitRules.freshState(day)
+        fun observe(at: Long, observation: InstagramSessionObservation) {
+            val decision = tracker.observe(at, observation)
+            state = InstagramSessionLimitRules.recordActiveTime(
+                state, decision.activeMillis, day, at, 86_400_000L,
+            ).state
+        }
 
-        tracker.observe(1_000L, InstagramSessionObservation.COUNTED)
-        tracker.observe(2_000L, InstagramSessionObservation.OUTSIDE)
-        val beforeGrace = tracker.observe(6_999L, InstagramSessionObservation.OUTSIDE)
-        val atGrace = tracker.observe(7_000L, InstagramSessionObservation.OUTSIDE)
-        val later = tracker.observe(8_000L, InstagramSessionObservation.OUTSIDE)
+        observe(0L, InstagramSessionObservation.COUNTED)
+        observe(120_000L, InstagramSessionObservation.COUNTED)
+        observe(120_000L, InstagramSessionObservation.OUTSIDE)
+        observe(125_000L, InstagramSessionObservation.OUTSIDE)
+        observe(7_320_000L, InstagramSessionObservation.OUTSIDE)
+        observe(7_320_000L, InstagramSessionObservation.COUNTED)
+        assertEquals(120_000L, state.sessionUsedMillis)
+        assertEquals(0, state.violationsToday)
 
-        assertFalse(beforeGrace.shouldResetSession)
-        assertTrue(atGrace.shouldResetSession)
-        assertFalse(later.shouldResetSession)
+        observe(7_499_000L, InstagramSessionObservation.COUNTED)
+        assertEquals(299_000L, state.sessionUsedMillis)
+        observe(7_500_000L, InstagramSessionObservation.COUNTED)
+        assertEquals(1, state.violationsToday)
+        assertEquals(9_300_000L, state.blockedUntilMillis)
     }
 
     @Test
@@ -81,14 +91,12 @@ class InstagramSessionTrackerTest {
         val nextTick = tracker.observe(3_604_000L, InstagramSessionObservation.COUNTED)
 
         assertEquals(0L, resumed.activeMillis)
-        assertFalse(resumed.shouldResetSession)
         assertEquals(1_000L, nextTick.activeMillis)
     }
 
     private fun tracker(
         unknownRecoveryMillis: Long = 5_000L,
     ) = InstagramSessionTracker(
-        exitConfirmationMillis = 5_000L,
         unknownRecoveryMillis = unknownRecoveryMillis,
     )
 }

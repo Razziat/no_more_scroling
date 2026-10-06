@@ -114,8 +114,9 @@ discarded immediately after analysis and is never written to disk.
 When the Instagram session limit is enabled, the application retains only
 local counters: current-session duration, the number of overruns that day, and
 the end of an active block. Home and Explore count. Messages and profiles
-pause the timer. Leaving Instagram resets the current session without erasing
-overruns already recorded that day.
+pause the timer. Leaving Instagram also pauses it without erasing accumulated
+time, even after a long break. After the first penalty, another five-minute
+allowance is available. Accumulated time and overruns reset on a new local day.
 
 Classification depends on the accessibility interface exposed by Instagram.
 To prevent easy bypasses, an unknown Instagram screen is conservatively

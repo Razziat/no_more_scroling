@@ -4,6 +4,7 @@ Version bêta pour Android 8.0 ou supérieur.
 
 ## Améliorations
 
+- Le compteur Instagram conserve le temps consommé après une pause, même de plusieurs heures dans la même journée. Quitter Instagram suspend le comptage ; il reprend au retour. Une nouvelle tranche de cinq minutes reste disponible après la première pénalité, et les compteurs sont remis à zéro au changement de jour.
 - Le message de pénalité disparaît automatiquement après trois secondes, même après la fermeture d’Instagram. Le temps restant détaillé reste consultable dans Anti Scroll.
 - Les tentatives de réouverture pendant une pénalité affichent un bref rappel du temps restant, sans fenêtre persistante.
 - Les actions de retour vérifient que l’application bloquée est toujours au premier plan afin d’éviter de fermer un autre écran.

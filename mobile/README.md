@@ -125,9 +125,10 @@ abandonnée après l’analyse et n’est jamais écrite sur le disque.
 Lorsque la limite de session Instagram est active, l’application conserve
 uniquement des compteurs locaux : durée de la session en cours, nombre de
 dépassements du jour et fin d’un éventuel blocage. L’accueil et Explorer sont
-comptés. Les messages et les profils mettent le minuteur en pause. Quitter
-Instagram remet la session en cours à zéro, sans effacer les dépassements déjà
-survenus dans la journée.
+comptés. Les messages, les profils et les pauses hors d’Instagram suspendent
+le minuteur sans effacer le temps consommé, même après une longue absence.
+Après la première pénalité, une nouvelle tranche de cinq minutes est disponible.
+Le temps consommé et les dépassements sont remis à zéro au changement de jour.
 
 La classification dépend de l’interface d’accessibilité exposée par Instagram.
 Par sécurité contre les contournements, un écran Instagram inconnu est compté

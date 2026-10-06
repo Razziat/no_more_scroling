@@ -535,13 +535,6 @@ class ShortFormBlockerService : AccessibilityService() {
         decision: InstagramSessionTrackingDecision,
         nowElapsedMillis: Long,
     ) {
-        if (decision.shouldResetSession) {
-            pendingInstagramActiveMillis = 0L
-            instagramSessionLimitManager.resetCurrentSession()
-            instagramSessionSurface = InstagramSessionSurface.COUNTED
-            lastInstagramPersistElapsedMillis = nowElapsedMillis
-        }
-
         if (decision.activeMillis <= 0L) return
 
         pendingInstagramActiveMillis += decision.activeMillis
