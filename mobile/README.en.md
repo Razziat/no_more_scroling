@@ -5,6 +5,19 @@
 This first Android version blocks the **YouTube Shorts** and **Instagram
 Reels** viewers while keeping the other parts of both applications available.
 
+## App overview
+
+| Choose what to block | Track Instagram time |
+| --- | --- |
+| <img src="../docs/images/android/home-en.png" width="280" alt="Anti Scroll settings with protection inactive and Shorts and Reels blocking switched on"> | <img src="../docs/images/android/session-en.png" width="280" alt="Instagram allowance enabled: three minutes remaining and no limits reached today"> |
+
+The main screen provides access to service activation and platform switches.
+Scroll down to find the Instagram allowance and punitive mode. In this
+example, two of the five available minutes have been used.
+
+These screenshots show the app running on an emulator. Counters contain
+demonstration values, with no personal data.
+
 ## MVP status
 
 - Native Android application written in Kotlin and Jetpack Compose.
@@ -62,6 +75,11 @@ The generated APK is located at
 7. In Android settings, select **Anti Scroll protection** and enable the
    service.
 
+<img src="../docs/images/android/activation-en.png" width="320" alt="Accessibility disclosure before activation, with Cancel and I agree and continue buttons">
+
+This disclosure explains the use of accessibility before opening Android
+settings. Enable the service in those settings to start protecting the apps.
+
 ### Manually installed APK on Android 13 or later
 
 Android may prevent the accessibility service from being enabled when Anti
@@ -80,6 +98,23 @@ measure for manually installed applications; the procedure is documented in
 Accessibility access is required to identify the visible screen and trigger
 Android’s **Back** action. It is not used to read, store, or transmit the
 user’s messages, searches, or videos.
+
+## Instagram limits and penalties
+
+The five-minute allowance counts time spent on Home and Explore. Messages,
+profiles and breaks outside Instagram pause the counter. Returning to the
+app preserves the time already used.
+
+<img src="../docs/images/android/penalty-en.png" width="320" alt="First Instagram limit reached: a thirty-minute block, its remaining time and 1 of 2 limits reached today">
+
+After the first limit, this card displays the remaining time until Instagram
+unlocks. Another five-minute allowance becomes available after the
+thirty-minute penalty. The second limit that day blocks Instagram until
+midnight in the phone’s local timezone.
+
+**Punitive mode** is a separate option: opening a Short or Reel triggers a
+thirty-minute penalty for that platform. The notice displayed after the app
+closes lasts three seconds; the detailed countdown remains in Anti Scroll.
 
 ## Architecture
 

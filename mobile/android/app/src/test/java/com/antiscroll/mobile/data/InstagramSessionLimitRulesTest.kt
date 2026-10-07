@@ -81,6 +81,7 @@ class InstagramSessionLimitRulesTest {
             state = yesterday,
             currentDayKey = day,
             nowMillis = 50_000_000L,
+            nextMidnightMillis = nextMidnight,
         )
 
         assertEquals(InstagramSessionLimitRules.freshState(day), normalized)

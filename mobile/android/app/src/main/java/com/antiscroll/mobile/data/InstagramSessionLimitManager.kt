@@ -1,8 +1,6 @@
 package com.antiscroll.mobile.data
 
 import android.content.Context
-import java.time.Instant
-import java.time.ZoneId
 
 data class InstagramSessionState(
     val dayKey: String,
@@ -36,15 +34,25 @@ object InstagramSessionLimitRules {
         state: InstagramSessionState,
         currentDayKey: String,
         nowMillis: Long,
+        nextMidnightMillis: Long,
     ): InstagramSessionState {
         if (state.dayKey != currentDayKey) {
             return freshState(currentDayKey)
         }
 
-        return if (state.blockedUntilMillis in 1L..nowMillis) {
-            state.copy(blockedUntilMillis = 0L)
+        // A midnight penalty follows the current phone timezone, including
+        // changes while the accessibility service remains alive.
+        val adjusted = if (state.violationsToday >= 2 && state.blockedUntilMillis > 0L) {
+            state.copy(blockedUntilMillis = nextMidnightMillis)
+        } else if (state.blockedUntilMillis > nowMillis) {
+            state.copy(blockedUntilMillis = minOf(state.blockedUntilMillis, nextMidnightMillis))
         } else {
             state
+        }
+        return if (adjusted.blockedUntilMillis in 1L..nowMillis) {
+            adjusted.copy(blockedUntilMillis = 0L)
+        } else {
+            adjusted
         }
     }
 
@@ -55,7 +63,7 @@ object InstagramSessionLimitRules {
         nowMillis: Long,
         nextMidnightMillis: Long,
     ): InstagramSessionRuleUpdate {
-        val normalized = normalize(state, currentDayKey, nowMillis)
+        val normalized = normalize(state, currentDayKey, nowMillis, nextMidnightMillis)
         if (deltaMillis <= 0L || normalized.blockedUntilMillis > nowMillis) {
             return InstagramSessionRuleUpdate(normalized, null)
         }
@@ -97,8 +105,8 @@ object InstagramSessionLimitRules {
 
 class InstagramSessionLimitManager(
     context: Context,
-    private val zoneId: ZoneId = ZoneId.systemDefault(),
 ) {
+    private val calendar = InstagramSessionCalendar()
     private val preferences =
         context.applicationContext.getSharedPreferences(
             PREFERENCES_NAME,
@@ -120,12 +128,13 @@ class InstagramSessionLimitManager(
         deltaMillis: Long,
         nowMillis: Long = System.currentTimeMillis(),
     ): InstagramSessionUpdate {
+        val day = calendar.dayAt(nowMillis)
         val ruleUpdate = InstagramSessionLimitRules.recordActiveTime(
-            state = readState(),
+            state = readState(day.key),
             deltaMillis = deltaMillis,
-            currentDayKey = dayKey(nowMillis),
+            currentDayKey = day.key,
             nowMillis = nowMillis,
-            nextMidnightMillis = nextMidnight(nowMillis),
+            nextMidnightMillis = day.nextMidnightMillis,
         )
         writeState(ruleUpdate.state)
 
@@ -148,11 +157,13 @@ class InstagramSessionLimitManager(
     }
 
     private fun normalizedState(nowMillis: Long): InstagramSessionState {
-        val stored = readState()
+        val day = calendar.dayAt(nowMillis)
+        val stored = readState(day.key)
         val normalized = InstagramSessionLimitRules.normalize(
             state = stored,
-            currentDayKey = dayKey(nowMillis),
+            currentDayKey = day.key,
             nowMillis = nowMillis,
+            nextMidnightMillis = day.nextMidnightMillis,
         )
         if (normalized != stored) {
             writeState(normalized)
@@ -184,10 +195,10 @@ class InstagramSessionLimitManager(
         )
     }
 
-    private fun readState(): InstagramSessionState {
+    private fun readState(currentDayKey: String): InstagramSessionState {
         val storedDayKey = preferences.getString(KEY_DAY, null)
         return if (storedDayKey == null) {
-            InstagramSessionLimitRules.freshState(dayKey(System.currentTimeMillis()))
+            InstagramSessionLimitRules.freshState(currentDayKey)
         } else {
             InstagramSessionState(
                 dayKey = storedDayKey,
@@ -205,14 +216,6 @@ class InstagramSessionLimitManager(
             .putInt(KEY_VIOLATIONS, state.violationsToday)
             .putLong(KEY_BLOCKED_UNTIL, state.blockedUntilMillis)
             .apply()
-    }
-
-    private fun dayKey(nowMillis: Long): String =
-        Instant.ofEpochMilli(nowMillis).atZone(zoneId).toLocalDate().toString()
-
-    private fun nextMidnight(nowMillis: Long): Long {
-        val date = Instant.ofEpochMilli(nowMillis).atZone(zoneId).toLocalDate()
-        return date.plusDays(1).atStartOfDay(zoneId).toInstant().toEpochMilli()
     }
 
     companion object {

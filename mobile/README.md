@@ -6,6 +6,19 @@ Cette première version Android bloque les lecteurs **YouTube Shorts** et
 **Instagram Reels** tout en conservant l’accès aux autres parties des deux
 applications.
 
+## Aperçu de l’application
+
+| Choisir les contenus à bloquer | Suivre le temps Instagram |
+| --- | --- |
+| <img src="../docs/images/android/home-fr.png" width="280" alt="Réglages Anti Scroll avec la protection inactive et les blocages Shorts et Reels activés"> | <img src="../docs/images/android/session-fr.png" width="280" alt="Limite Instagram activée : trois minutes restantes et aucun dépassement dans la journée"> |
+
+L’écran principal donne accès à l’activation du service et aux interrupteurs
+par plateforme. En faisant défiler la page, on retrouve la limite Instagram
+et le mode punitif. Ici, deux minutes ont été consommées sur les cinq disponibles.
+
+Ces captures proviennent de l’application sur émulateur. Les compteurs sont
+des exemples de démonstration, sans données personnelles.
+
 ## État du MVP
 
 - Application Android native en Kotlin et Jetpack Compose.
@@ -69,6 +82,12 @@ l’APK de debug.
 7. Dans les réglages Android, sélectionner **Protection Anti Scroll** et
    activer le service.
 
+<img src="../docs/images/android/activation-fr.png" width="320" alt="Déclaration avant activation expliquant l’utilisation de l’accès d’accessibilité, avec les boutons Annuler et J’accepte et je continue">
+
+Cette déclaration explique l’usage de l’accessibilité avant d’ouvrir les
+réglages Android. Le service doit ensuite être activé dans ces réglages pour
+que les protections fonctionnent.
+
 ### APK installé manuellement sur Android 13 ou supérieur
 
 Android peut empêcher l’activation du service d’accessibilité lorsqu’Anti
@@ -90,6 +109,24 @@ L’accès d’accessibilité est nécessaire pour identifier l’écran actuell
 affiché et déclencher l’action Android **Retour**. Il ne sert pas à lire,
 enregistrer ou transmettre les messages, recherches ou vidéos de
 l’utilisateur.
+
+## Limites Instagram et pénalités
+
+La limite de cinq minutes compte le temps passé sur l’accueil et Explorer.
+Les messages, les profils et les pauses hors d’Instagram suspendent le
+compteur. Le temps déjà consommé reste conservé au retour.
+
+<img src="../docs/images/android/penalty-fr.png" width="320" alt="Premier dépassement de la limite Instagram : blocage de trente minutes, temps restant et compteur de dépassements à 1 sur 2">
+
+Après le premier dépassement, cette carte affiche le temps restant avant le
+déblocage. Une nouvelle tranche de cinq minutes est disponible après la
+pénalité de trente minutes. Le second dépassement de la journée bloque
+Instagram jusqu’à minuit local du téléphone.
+
+Le **mode punitif** est une option distincte : ouvrir un Short ou un Reel
+déclenche une pénalité de trente minutes pour la plateforme concernée. Le
+message qui apparaît après sa fermeture dure trois secondes ; le minuteur
+détaillé reste consultable dans Anti Scroll.
 
 ## Architecture
 

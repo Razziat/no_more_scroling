@@ -61,6 +61,9 @@ Réaliser ces essais sur au moins un appareil modeste et un appareil récent.
    relancer le service. Le minuteur doit reprendre uniquement quand nécessaire.
 6. Tester le premier dépassement, le second dépassement, l'expiration, le passage
    à minuit et le déblocage manuel du mode punitif.
+7. Pendant un blocage jusqu’à minuit, changer le fuseau du téléphone sans relancer
+   le service. Le blocage doit suivre le prochain minuit local. À Londres, le
+   changement de jour à Paris ne doit pas remettre les compteurs à zéro.
 
 ## Mesures de performance
 

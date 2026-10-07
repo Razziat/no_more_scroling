@@ -11,7 +11,21 @@ that applies the same principle to the native YouTube and Instagram apps.
 Anti-scroll runs entirely on the device: no account, no server, and no
 telemetry.
 
-## Features
+## Android application
+
+On Android, choose which short-form viewers to block and optionally enable a
+five-minute allowance for the Instagram feed. The app shows the remaining
+time and the number of limits reached that day.
+
+| Settings and activation | First Instagram penalty |
+| --- | --- |
+| <img src="docs/images/android/home-en.png" width="280" alt="Anti Scroll Android settings: enable protection and toggle YouTube Shorts and Instagram Reels blocking"> | <img src="docs/images/android/penalty-en.png" width="280" alt="Instagram blocked after the first limit, showing the remaining penalty time and 1 of 2 limits reached"> |
+
+Screenshots of the app on an emulator, with demonstration counters.
+See the [Android guide](mobile/README.en.md) for activation, limits and
+penalties. Android and extension versions are numbered independently.
+
+## Extension features
 
 - Targeted blocking of YouTube Shorts and Instagram Reels routes.
 - Normal access to the rest of YouTube and Instagram.

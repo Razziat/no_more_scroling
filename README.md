@@ -12,7 +12,21 @@ qui applique le même principe aux applications natives YouTube et Instagram.
 Anti-scroll fonctionne entièrement sur l’appareil : aucun compte, aucun
 serveur et aucune télémétrie.
 
-## Fonctionnalités
+## Application Android
+
+Sur Android, les réglages permettent de choisir les formats à bloquer et
+d’activer une limite de cinq minutes pour le fil Instagram. Le temps restant
+et les dépassements du jour sont visibles dans l’application.
+
+| Réglages et activation | Première pénalité Instagram |
+| --- | --- |
+| <img src="docs/images/android/home-fr.png" width="280" alt="Écran Android Anti Scroll : activation de la protection et interrupteurs YouTube Shorts et Instagram Reels"> | <img src="docs/images/android/penalty-fr.png" width="280" alt="Instagram bloqué après un premier dépassement, avec le temps restant et le compteur 1 sur 2"> |
+
+Captures de l’application sur émulateur, avec des compteurs de démonstration.
+Le [guide Android](mobile/README.md) détaille l’activation, les limites et les
+pénalités. Les versions Android et celles de l’extension sont indépendantes.
+
+## Fonctionnalités de l’extension
 
 - Blocage ciblé des routes YouTube Shorts et Instagram Reels.
 - Navigation normale conservée sur le reste de YouTube et Instagram.
